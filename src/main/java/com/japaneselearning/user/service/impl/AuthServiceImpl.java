@@ -1,5 +1,7 @@
 package com.japaneselearning.user.service.impl;
 
+import com.japaneselearning.user.common.exception.BusinessException;
+import com.japaneselearning.user.common.exception.ErrorCode;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.japaneselearning.user.dto.request.RegisterAccountRequest;
 import com.japaneselearning.user.dto.response.RegisterAccountResponse;
@@ -30,11 +32,15 @@ public class AuthServiceImpl implements AuthService {
                 .toLowerCase(Locale.ROOT);
 
         if (userRepository.existsByEmail(email)) {
-            log.warn("Registration rejected: duplicate email");
-            log.error("Email already exists");
+            throw new BusinessException(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
         }
 
         String username = registerAccountRequest.username().trim();
+
+        if (userRepository.existsByUsername(username)) {
+            throw new BusinessException(ErrorCode.USER_USERNAME_ALREADY_EXISTS);
+        }
+
         String passwordHash =
                 passwordEncoder.encode(registerAccountRequest.password());
 
@@ -42,8 +48,10 @@ public class AuthServiceImpl implements AuthService {
 
         User savedUser = userRepository.save(user);
 
-        log.info("User registration completed, userId={}",
-                savedUser.getId());
+        log.info(
+                "User registration completed, userId={}",
+                savedUser.getId()
+        );
 
         return new RegisterAccountResponse(
                 savedUser.getId(),

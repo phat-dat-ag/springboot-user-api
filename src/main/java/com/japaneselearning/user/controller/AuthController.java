@@ -1,5 +1,7 @@
 package com.japaneselearning.user.controller;
 
+import com.japaneselearning.user.common.controller.BaseController;
+import com.japaneselearning.user.common.response.APIResponse;
 import com.japaneselearning.user.dto.request.RegisterAccountRequest;
 import com.japaneselearning.user.dto.response.RegisterAccountResponse;
 import com.japaneselearning.user.service.AuthService;
@@ -15,12 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 @AllArgsConstructor
 @Slf4j
-public class AuthController {
+public class AuthController extends BaseController {
 
     private final AuthService authService;
 
-    @PostMapping
-    public ResponseEntity<RegisterAccountResponse> Register(
+    @PostMapping("/register")
+    public ResponseEntity<APIResponse<RegisterAccountResponse>> registerAccount(
             @Valid RegisterAccountRequest registerAccountRequest
     ) {
         log.info(
@@ -29,6 +31,8 @@ public class AuthController {
                 registerAccountRequest.email()
         );
 
-        return ResponseEntity.ok(authService.registerAccount(registerAccountRequest));
+        RegisterAccountResponse response = authService.registerAccount(registerAccountRequest);
+
+        return success(response);
     }
 }
