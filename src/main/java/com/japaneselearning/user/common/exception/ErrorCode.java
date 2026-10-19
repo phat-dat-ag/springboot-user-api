@@ -16,6 +16,9 @@ public enum ErrorCode {
     USER_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "Email is already registered"),
     USER_USERNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "username is already registered"),
 
+    USER_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid username/ email or password"),
+    USER_ACCOUNT_NOT_ACTIVATED(HttpStatus.FORBIDDEN, "Account is not activated"),
+
     // Server errors
     INTERNAL_SERVER_ERROR(
             HttpStatus.INTERNAL_SERVER_ERROR,

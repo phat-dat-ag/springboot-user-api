@@ -2,6 +2,10 @@ package com.japaneselearning.user.service.impl;
 
 import com.japaneselearning.user.common.exception.BusinessException;
 import com.japaneselearning.user.common.exception.ErrorCode;
+import com.japaneselearning.user.dto.request.LoginRequest;
+import com.japaneselearning.user.dto.response.LoginResponse;
+import com.japaneselearning.user.security.JwtTokenService;
+import com.japaneselearning.user.service.RefreshTokenService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.japaneselearning.user.dto.request.RegisterAccountRequest;
 import com.japaneselearning.user.dto.response.RegisterAccountResponse;
@@ -22,6 +26,9 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    private final RefreshTokenService refreshTokenService;
+    private final JwtTokenService jwtTokenService;
 
     @Override
     @Transactional
@@ -58,6 +65,49 @@ public class AuthServiceImpl implements AuthService {
                 savedUser.getUsername(),
                 savedUser.getEmail(),
                 savedUser.isActivated()
+        );
+    }
+
+    private User retrieveActivatedAccount(String identifier, String password) {
+
+        User user;
+
+        if (identifier.contains("@")) {
+            user = userRepository.findByEmail(identifier.toLowerCase(Locale.ROOT)).orElse(null);
+        } else {
+            user = userRepository.findByUsername(identifier).orElse(null);
+        }
+
+        if (user == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.USER_INVALID_CREDENTIALS);
+        }
+
+        if (!user.isActivated()) {
+            throw new BusinessException(ErrorCode.USER_ACCOUNT_NOT_ACTIVATED);
+        }
+
+        return user;
+    }
+
+    @Override
+    @Transactional
+    public LoginResponse login(LoginRequest loginRequest) {
+
+        String identifier = loginRequest.usernameOrEmail().trim();
+
+        User user = retrieveActivatedAccount(identifier, loginRequest.password());
+
+        JwtTokenService.GeneratedAccessToken accessToken = jwtTokenService.generateAccessToken(user);
+
+        String rawRefreshToken = refreshTokenService.createAndSaveRefreshToken(user);
+
+        log.info("User login successful, userId={}", user.getId());
+
+        return new LoginResponse(
+                "Bearer",
+                accessToken.token(),
+                rawRefreshToken,
+                accessToken.expiresIn()
         );
     }
 }
