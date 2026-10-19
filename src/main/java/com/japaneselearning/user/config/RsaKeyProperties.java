@@ -1,4 +1,3 @@
-
 package com.japaneselearning.user.config;
 
 import lombok.Getter;

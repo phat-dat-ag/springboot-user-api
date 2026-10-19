@@ -1,4 +1,3 @@
-
 package com.japaneselearning.user.security;
 
 import com.japaneselearning.user.config.RsaKeyProperties;
