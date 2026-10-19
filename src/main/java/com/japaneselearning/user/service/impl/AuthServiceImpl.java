@@ -3,24 +3,27 @@ package com.japaneselearning.user.service.impl;
 import com.japaneselearning.user.common.exception.BusinessException;
 import com.japaneselearning.user.common.exception.ErrorCode;
 import com.japaneselearning.user.dto.request.LoginRequest;
+import com.japaneselearning.user.dto.request.RefreshTokenRequest;
 import com.japaneselearning.user.dto.response.LoginResponse;
+import com.japaneselearning.user.dto.response.RefreshTokenResponse;
+import com.japaneselearning.user.entity.RefreshToken;
 import com.japaneselearning.user.security.JwtTokenService;
 import com.japaneselearning.user.service.RefreshTokenService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.japaneselearning.user.dto.request.RegisterAccountRequest;
 import com.japaneselearning.user.dto.response.RegisterAccountResponse;
 import com.japaneselearning.user.entity.User;
 import com.japaneselearning.user.repository.UserRepository;
 import com.japaneselearning.user.service.AuthService;
-import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Locale;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class AuthServiceImpl implements AuthService {
 
@@ -107,6 +110,24 @@ public class AuthServiceImpl implements AuthService {
                 "Bearer",
                 accessToken.token(),
                 rawRefreshToken,
+                accessToken.expiresIn()
+        );
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public RefreshTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
+        RefreshToken oldRefreshToken =
+                refreshTokenService.findRefreshTokenByRawToken(refreshTokenRequest.refreshToken());
+
+        String newRawRefreshToken = refreshTokenService.refreshToken(oldRefreshToken);
+
+        JwtTokenService.GeneratedAccessToken accessToken
+                = jwtTokenService.generateAccessToken(oldRefreshToken.getUser());
+
+        return new RefreshTokenResponse(
+                accessToken.token(),
+                newRawRefreshToken,
                 accessToken.expiresIn()
         );
     }
