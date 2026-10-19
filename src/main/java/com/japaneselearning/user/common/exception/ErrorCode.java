@@ -19,6 +19,10 @@ public enum ErrorCode {
     USER_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid username/ email or password"),
     USER_ACCOUNT_NOT_ACTIVATED(HttpStatus.FORBIDDEN, "Account is not activated"),
 
+    AUTH_REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "refresh token not found"),
+    AUTH_REFRESH_TOKEN_REVOKED(HttpStatus.FORBIDDEN, "refresh token has been already revoked"),
+    AUTH_REFRESH_TOKEN_EXPIRED(HttpStatus.FORBIDDEN, "refresh token has been already expired"),
+
     // Server errors
     INTERNAL_SERVER_ERROR(
             HttpStatus.INTERNAL_SERVER_ERROR,

@@ -1,10 +1,13 @@
 package com.japaneselearning.user.service.impl;
 
+import com.japaneselearning.user.common.exception.BusinessException;
+import com.japaneselearning.user.common.exception.ErrorCode;
 import com.japaneselearning.user.entity.RefreshToken;
 import com.japaneselearning.user.entity.User;
 import com.japaneselearning.user.repository.RefreshTokenRepository;
 import com.japaneselearning.user.security.JwtProperties;
 import com.japaneselearning.user.service.RefreshTokenService;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,20 +31,29 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
 
     @Override
+    @Transactional
     public String createAndSaveRefreshToken(User user) {
-        String rawRefreshToken = generateRefreshToken();
+        return generateAndSaveRefreshToken(user);
+    }
 
-        String refreshTokenHash = hashRefreshToken(rawRefreshToken);
+    @Override
+    public RefreshToken findRefreshTokenByRawToken(String refreshToken) {
+        String refreshTokenHash = hashRefreshToken(refreshToken);
 
-        RefreshToken refreshToken = new RefreshToken(
-                user,
-                refreshTokenHash,
-                LocalDateTime.now().plusDays(jwtProperties.refreshTokenTtlDays())
-        );
+        return refreshTokenRepository.findByTokenHash(refreshTokenHash)
+                .orElseThrow(
+                        () -> new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_NOT_FOUND)
+                );
+    }
 
-        refreshTokenRepository.save(refreshToken);
+    @Override
+    @Transactional
+    public String refreshToken(RefreshToken oldRefreshToken) {
+        validateRefreshToken(oldRefreshToken);
 
-        return rawRefreshToken;
+        revokeToken(oldRefreshToken);
+
+        return generateAndSaveRefreshToken(oldRefreshToken.getUser());
     }
 
     private String generateRefreshToken() {
@@ -70,5 +82,39 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                     exception
             );
         }
+    }
+
+    private String generateAndSaveRefreshToken(User user) {
+        String rawRefreshToken = generateRefreshToken();
+
+        String refreshTokenHash = hashRefreshToken(rawRefreshToken);
+
+        RefreshToken refreshToken = new RefreshToken(
+                user,
+                refreshTokenHash,
+                LocalDateTime.now().plusDays(jwtProperties.refreshTokenTtlDays())
+        );
+
+        refreshTokenRepository.save(refreshToken);
+
+        return rawRefreshToken;
+    }
+
+    private void validateRefreshToken(RefreshToken refreshToken) {
+        if (refreshToken.isRevoked()) {
+            throw new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (!refreshToken.getExpiresAt().isAfter(now)) {
+            throw new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED);
+        }
+    }
+
+    private void revokeToken(RefreshToken refreshToken) {
+        refreshToken.revoke();
+
+        refreshTokenRepository.save(refreshToken);
     }
 }

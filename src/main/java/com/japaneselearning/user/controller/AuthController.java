@@ -3,8 +3,10 @@ package com.japaneselearning.user.controller;
 import com.japaneselearning.user.common.controller.BaseController;
 import com.japaneselearning.user.common.response.APIResponse;
 import com.japaneselearning.user.dto.request.LoginRequest;
+import com.japaneselearning.user.dto.request.RefreshTokenRequest;
 import com.japaneselearning.user.dto.request.RegisterAccountRequest;
 import com.japaneselearning.user.dto.response.LoginResponse;
+import com.japaneselearning.user.dto.response.RefreshTokenResponse;
 import com.japaneselearning.user.dto.response.RegisterAccountResponse;
 import com.japaneselearning.user.service.AuthService;
 import jakarta.validation.Valid;
@@ -48,6 +50,17 @@ public class AuthController extends BaseController {
         log.info("Login request from {} received", loginRequest.usernameOrEmail());
 
         LoginResponse response = authService.login(loginRequest);
+
+        return success(response);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<@NonNull APIResponse<RefreshTokenResponse>> refresh(
+            @Valid @RequestBody RefreshTokenRequest refreshTokenRequest
+    ) {
+        log.info("Refresh a new token request for {} received", refreshTokenRequest.refreshToken());
+
+        RefreshTokenResponse response = authService.refreshToken(refreshTokenRequest);
 
         return success(response);
     }
