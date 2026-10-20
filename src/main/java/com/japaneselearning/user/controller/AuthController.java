@@ -15,6 +15,8 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,12 +35,17 @@ public class AuthController extends BaseController {
             @Valid @RequestBody RegisterAccountRequest registerAccountRequest
     ) {
         log.info(
-                "Register new account for username: {} ,email: {}",
+                "Received account registration request: username={}, email={}",
                 registerAccountRequest.username(),
                 registerAccountRequest.email()
         );
 
         RegisterAccountResponse response = authService.registerAccount(registerAccountRequest);
+
+        log.info(
+                "Account registration completed successfully: username={}",
+                registerAccountRequest.username()
+        );
 
         return success(response);
     }
@@ -48,9 +55,11 @@ public class AuthController extends BaseController {
     public ResponseEntity<@NonNull APIResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest loginRequest
     ) {
-        log.info("Login request from {} received", loginRequest.usernameOrEmail());
+        log.info("Received login request: identifier={}", loginRequest.usernameOrEmail());
 
         LoginResponse response = authService.login(loginRequest);
+
+        log.info("Login completed successfully");
 
         return success(response);
     }
@@ -59,18 +68,25 @@ public class AuthController extends BaseController {
     public ResponseEntity<@NonNull APIResponse<RefreshTokenResponse>> refresh(
             @Valid @RequestBody RefreshTokenRequest refreshTokenRequest
     ) {
-        log.info("Refresh a new token request for {} received", refreshTokenRequest.refreshToken());
+        log.info("Received refresh token request");
 
         RefreshTokenResponse response = authService.refreshToken(refreshTokenRequest);
+
+        log.info("Refresh token completed successfully");
 
         return success(response);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<@NonNull APIResponse<Void>> logout(
-            @Valid @RequestBody LogoutRequest logoutRequest
+            @Valid @RequestBody LogoutRequest logoutRequest,
+            @AuthenticationPrincipal Jwt jwt
     ) {
+        log.info("Received logout request: userId={}", jwt.getSubject());
+
         authService.logout(logoutRequest.refreshToken());
+
+        log.info("Logout completed successfully");
 
         return successWithoutContent();
     }

@@ -2,6 +2,8 @@ package com.japaneselearning.user.controller;
 
 import com.japaneselearning.user.security.RsaKeyProvider;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,12 +16,15 @@ import java.util.List;
 
 @RestController
 @AllArgsConstructor
+@Slf4j
 public class JwksController {
 
     private final RsaKeyProvider keyProvider;
 
     @GetMapping("/.well-known/jwks.json")
-    public ResponseEntity<JwksResponse> getJwks() {
+    public ResponseEntity<@NonNull JwksResponse> getJwks() {
+        log.info("Received get JWKS request");
+
         List<Jwk> jwks = keyProvider.getKeys()
                 .values()
                 .stream()
@@ -36,6 +41,8 @@ public class JwksController {
                     );
                 })
                 .toList();
+
+        log.info("Get JWKS completed successfully");
 
         return ResponseEntity.ok()
                 .cacheControl(

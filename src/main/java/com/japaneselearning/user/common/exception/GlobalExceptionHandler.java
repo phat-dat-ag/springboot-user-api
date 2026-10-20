@@ -5,6 +5,7 @@ import com.japaneselearning.user.common.response.APIResponse;
 
 import jakarta.validation.ConstraintViolationException;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,7 @@ public class GlobalExceptionHandler {
 
     // 1. Business exceptions
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<APIResponse<Void>> handleBusinessException(
+    public ResponseEntity<@NonNull APIResponse<Void>> handleBusinessException(
             BusinessException ex
     ) {
         ErrorCode errorCode = ex.getErrorCode();
@@ -41,7 +42,7 @@ public class GlobalExceptionHandler {
 
     // 2. @Valid request body validation
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<APIResponse<Void>> handleValidationException(
+    public ResponseEntity<@NonNull APIResponse<Void>> handleValidationException(
             MethodArgumentNotValidException ex
     ) {
         List<APIError.ErrorDetail> details =
@@ -66,7 +67,7 @@ public class GlobalExceptionHandler {
 
     // 3. Method-level or parameter validation
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<APIResponse<Void>> handleConstraintViolation(
+    public ResponseEntity<@NonNull APIResponse<Void>> handleConstraintViolation(
             ConstraintViolationException ex
     ) {
         List<APIError.ErrorDetail> details =
@@ -88,7 +89,7 @@ public class GlobalExceptionHandler {
 
     // 4. Invalid JSON or unreadable request body
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<APIResponse<Void>> handleInvalidRequestBody(
+    public ResponseEntity<@NonNull APIResponse<Void>> handleInvalidRequestBody(
             HttpMessageNotReadableException ex
     ) {
         return buildErrorResponse(
@@ -100,7 +101,7 @@ public class GlobalExceptionHandler {
 
     // 5. Unsupported HTTP method
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<APIResponse<Void>> handleMethodNotAllowed(
+    public ResponseEntity<@NonNull APIResponse<Void>> handleMethodNotAllowed(
             HttpRequestMethodNotSupportedException ex
     ) {
         return buildErrorResponse(
@@ -112,7 +113,7 @@ public class GlobalExceptionHandler {
 
     // 6. Resource or endpoint not found
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<APIResponse<Void>> handleResourceNotFound(
+    public ResponseEntity<@NonNull APIResponse<Void>> handleResourceNotFound(
             NoResourceFoundException ex
     ) {
         return buildErrorResponse(
@@ -124,7 +125,7 @@ public class GlobalExceptionHandler {
 
     // 7. Database integrity errors not mapped elsewhere
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<APIResponse<Void>> handleDataIntegrityViolation(
+    public ResponseEntity<@NonNull APIResponse<Void>> handleDataIntegrityViolation(
             DataIntegrityViolationException ex
     ) {
         log.warn("Database integrity constraint violation");
@@ -138,7 +139,7 @@ public class GlobalExceptionHandler {
 
     // 8. Unexpected exceptions
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<APIResponse<Void>> handleUnexpectedException(
+    public ResponseEntity<@NonNull APIResponse<Void>> handleUnexpectedException(
             Exception ex
     ) {
         log.error("Unexpected application error", ex);
@@ -151,7 +152,7 @@ public class GlobalExceptionHandler {
     }
 
     // Shared response builder
-    private ResponseEntity<APIResponse<Void>> buildErrorResponse(
+    private ResponseEntity<@NonNull APIResponse<Void>> buildErrorResponse(
             ErrorCode errorCode,
             String message,
             APIError error
