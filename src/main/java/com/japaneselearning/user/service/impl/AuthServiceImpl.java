@@ -131,4 +131,14 @@ public class AuthServiceImpl implements AuthService {
                 accessToken.expiresIn()
         );
     }
+
+    @Override
+    @Transactional
+    public void logout(String refreshToken) {
+        RefreshToken oldRefreshToken = refreshTokenService.findRefreshTokenByRawToken(refreshToken);
+
+        refreshTokenService.validateRefreshToken(oldRefreshToken);
+
+        refreshTokenService.revokeToken(oldRefreshToken);
+    }
 }
