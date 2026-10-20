@@ -7,6 +7,7 @@ import com.japaneselearning.user.entity.User;
 import com.japaneselearning.user.repository.RefreshTokenRepository;
 import com.japaneselearning.user.security.JwtProperties;
 import com.japaneselearning.user.service.RefreshTokenService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final JwtProperties jwtProperties;
@@ -31,10 +33,20 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     public void validateRefreshToken(RefreshToken refreshToken) {
         if (refreshToken.isRevoked()) {
+            log.warn(
+                    "Refresh token has already been revoked, refreshTokenId={}",
+                    refreshToken.getId()
+            );
+
             throw new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED);
         }
 
         if (refreshToken.isExpired()) {
+            log.warn(
+                    "Refresh token has already been expired, refreshTokenId={}",
+                    refreshToken.getId()
+            );
+
             throw new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED);
         }
     }
@@ -43,6 +55,11 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         refreshToken.revoke();
 
         refreshTokenRepository.save(refreshToken);
+
+        log.info(
+                "Revoked refreshToken successfully, refreshTokenId={}",
+                refreshToken.getId()
+        );
     }
 
     @Override
@@ -57,7 +74,14 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
         return refreshTokenRepository.findByTokenHash(refreshTokenHash)
                 .orElseThrow(
-                        () -> new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_NOT_FOUND)
+                        () -> {
+                            log.warn(
+                                    "refreshToken not found, refreshTokenHash={}",
+                                    refreshTokenHash
+                            );
+
+                            return new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_NOT_FOUND);
+                        }
                 );
     }
 
@@ -110,7 +134,12 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                 LocalDateTime.now().plusDays(jwtProperties.refreshTokenTtlDays())
         );
 
-        refreshTokenRepository.save(refreshToken);
+        RefreshToken savedRefreshToken = refreshTokenRepository.save(refreshToken);
+
+        log.info(
+                "Created refreshToken successfully, refreshTokenId={}",
+                savedRefreshToken.getId()
+        );
 
         return rawRefreshToken;
     }
