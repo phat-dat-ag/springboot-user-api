@@ -29,6 +29,21 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    public void validateRefreshToken(RefreshToken refreshToken) {
+        if (refreshToken.isRevoked()) {
+            throw new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED);
+        }
+
+        if (refreshToken.isExpired()) {
+            throw new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED);
+        }
+    }
+
+    public void revokeToken(RefreshToken refreshToken) {
+        refreshToken.revoke();
+
+        refreshTokenRepository.save(refreshToken);
+    }
 
     @Override
     @Transactional
@@ -98,23 +113,5 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         refreshTokenRepository.save(refreshToken);
 
         return rawRefreshToken;
-    }
-
-    private void validateRefreshToken(RefreshToken refreshToken) {
-        if (refreshToken.isRevoked()) {
-            throw new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED);
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-
-        if (!refreshToken.getExpiresAt().isAfter(now)) {
-            throw new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED);
-        }
-    }
-
-    private void revokeToken(RefreshToken refreshToken) {
-        refreshToken.revoke();
-
-        refreshTokenRepository.save(refreshToken);
     }
 }

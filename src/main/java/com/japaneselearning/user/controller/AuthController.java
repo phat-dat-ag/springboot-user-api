@@ -3,6 +3,7 @@ package com.japaneselearning.user.controller;
 import com.japaneselearning.user.common.controller.BaseController;
 import com.japaneselearning.user.common.response.APIResponse;
 import com.japaneselearning.user.dto.request.LoginRequest;
+import com.japaneselearning.user.dto.request.LogoutRequest;
 import com.japaneselearning.user.dto.request.RefreshTokenRequest;
 import com.japaneselearning.user.dto.request.RegisterAccountRequest;
 import com.japaneselearning.user.dto.response.LoginResponse;
@@ -63,5 +64,14 @@ public class AuthController extends BaseController {
         RefreshTokenResponse response = authService.refreshToken(refreshTokenRequest);
 
         return success(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<@NonNull APIResponse<Void>> logout(
+            @Valid @RequestBody LogoutRequest logoutRequest
+    ) {
+        authService.logout(logoutRequest.refreshToken());
+
+        return successWithoutContent();
     }
 }
