@@ -3,8 +3,10 @@ package com.japaneselearning.user.service;
 import com.japaneselearning.user.common.exception.BusinessException;
 import com.japaneselearning.user.common.exception.ErrorCode;
 import com.japaneselearning.user.dto.request.LoginRequest;
+import com.japaneselearning.user.dto.request.RefreshTokenRequest;
 import com.japaneselearning.user.dto.request.RegisterAccountRequest;
 import com.japaneselearning.user.dto.response.LoginResponse;
+import com.japaneselearning.user.dto.response.RefreshTokenResponse;
 import com.japaneselearning.user.dto.response.RegisterAccountResponse;
 import com.japaneselearning.user.entity.RefreshToken;
 import com.japaneselearning.user.entity.User;
@@ -12,6 +14,7 @@ import com.japaneselearning.user.factory.dto.entity.AccessTokenFactory;
 import com.japaneselearning.user.factory.dto.entity.RefreshTokenFactory;
 import com.japaneselearning.user.factory.dto.entity.UserFactory;
 import com.japaneselearning.user.factory.dto.request.LoginRequestFactory;
+import com.japaneselearning.user.factory.dto.request.RefreshTokenRequestFactory;
 import com.japaneselearning.user.factory.dto.request.RegisterAccountRequestFactory;
 import com.japaneselearning.user.repository.UserRepository;
 import com.japaneselearning.user.security.JwtTokenService;
@@ -319,6 +322,129 @@ public class AuthServiceImplTest {
         verify(jwtTokenService, never()).generateAccessToken(any(User.class));
 
         verify(refreshTokenService, never()).createAndSaveRefreshToken(any(User.class));
+    }
+
+    @Test
+    void refreshToken_shouldSuccess() {
+//        Arrange
+
+        RefreshTokenRequest validRequest = RefreshTokenRequestFactory.createValid();
+
+        RefreshToken oldRefreshToken = RefreshTokenFactory.createValid();
+
+        when(refreshTokenService.findRefreshTokenByRawToken(validRequest.refreshToken()))
+                .thenReturn(oldRefreshToken);
+
+        when(refreshTokenService.refreshToken(oldRefreshToken))
+                .thenReturn(RAW_REFRESH_TOKEN);
+
+        JwtTokenService.GeneratedAccessToken accessToken = AccessTokenFactory.createValid();
+
+        when(jwtTokenService.generateAccessToken(oldRefreshToken.getUser()))
+                .thenReturn(accessToken);
+
+//        Act
+
+        RefreshTokenResponse response = authService.refreshToken(validRequest);
+
+//        Assert
+
+        assertEquals(accessToken.token(), response.accessToken());
+        assertEquals(RAW_REFRESH_TOKEN, response.refreshToken());
+        assertEquals(accessToken.expiresIn(), response.expiresIn());
+
+//        Verify
+
+        verify(refreshTokenService).findRefreshTokenByRawToken(validRequest.refreshToken());
+        verify(refreshTokenService).refreshToken(oldRefreshToken);
+        verify(jwtTokenService).generateAccessToken(oldRefreshToken.getUser());
+    }
+
+    @Test
+    void refreshToken_shouldFailed_whenRefreshTokenNotFound() {
+//        Arrange
+
+        RefreshTokenRequest validRequest = RefreshTokenRequestFactory.createValid();
+
+        when(refreshTokenService.findRefreshTokenByRawToken(validRequest.refreshToken()))
+                .thenThrow(new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_NOT_FOUND));
+
+//        Act
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> authService.refreshToken(validRequest)
+        );
+
+//        Assert
+
+        assertEquals(ErrorCode.AUTH_REFRESH_TOKEN_NOT_FOUND, exception.getErrorCode());
+
+//        Verify
+
+        verify(refreshTokenService).findRefreshTokenByRawToken(validRequest.refreshToken());
+    }
+
+    @Test
+    void refreshToken_shouldFailed_whenTokenRevoked() {
+//        Arrange
+
+        RefreshTokenRequest validRequest = RefreshTokenRequestFactory.createValid();
+
+        RefreshToken oldRefreshToken = RefreshTokenFactory.createValid();
+
+        when(refreshTokenService.findRefreshTokenByRawToken(validRequest.refreshToken()))
+                .thenReturn(oldRefreshToken);
+
+        when(refreshTokenService.refreshToken(oldRefreshToken))
+                .thenThrow(new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED));
+
+//        Act
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> authService.refreshToken(validRequest)
+        );
+
+//        Assert
+
+        assertEquals(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED, exception.getErrorCode());
+
+//        Verify
+
+        verify(refreshTokenService).findRefreshTokenByRawToken(validRequest.refreshToken());
+        verify(refreshTokenService).refreshToken(oldRefreshToken);
+    }
+
+    @Test
+    void refreshToken_shouldFailed_whenTokenExpired() {
+//        Arrange
+
+        RefreshTokenRequest validRequest = RefreshTokenRequestFactory.createValid();
+
+        RefreshToken oldRefreshToken = RefreshTokenFactory.createValid();
+
+        when(refreshTokenService.findRefreshTokenByRawToken(validRequest.refreshToken()))
+                .thenReturn(oldRefreshToken);
+
+        when(refreshTokenService.refreshToken(oldRefreshToken))
+                .thenThrow(new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED));
+
+//        Act
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> authService.refreshToken(validRequest)
+        );
+
+//        Assert
+
+        assertEquals(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED, exception.getErrorCode());
+
+//        Verify
+
+        verify(refreshTokenService).findRefreshTokenByRawToken(validRequest.refreshToken());
+        verify(refreshTokenService).refreshToken(oldRefreshToken);
     }
 
     @Test
