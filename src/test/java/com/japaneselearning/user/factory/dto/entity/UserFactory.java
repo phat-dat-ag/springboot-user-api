@@ -11,4 +11,16 @@ public class UserFactory {
                 "11111111"
         );
     }
+
+    public static User createNotActivated() {
+        User user = new User(
+                "datngu133",
+                "datngu133@gmail.com",
+                "11111111"
+        );
+
+        user.setActivated(false);
+
+        return user;
+    }
 }

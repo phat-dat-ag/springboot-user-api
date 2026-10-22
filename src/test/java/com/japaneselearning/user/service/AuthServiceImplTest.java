@@ -2,13 +2,19 @@ package com.japaneselearning.user.service;
 
 import com.japaneselearning.user.common.exception.BusinessException;
 import com.japaneselearning.user.common.exception.ErrorCode;
+import com.japaneselearning.user.dto.request.LoginRequest;
 import com.japaneselearning.user.dto.request.RegisterAccountRequest;
+import com.japaneselearning.user.dto.response.LoginResponse;
 import com.japaneselearning.user.dto.response.RegisterAccountResponse;
 import com.japaneselearning.user.entity.RefreshToken;
 import com.japaneselearning.user.entity.User;
+import com.japaneselearning.user.factory.dto.entity.AccessTokenFactory;
 import com.japaneselearning.user.factory.dto.entity.RefreshTokenFactory;
+import com.japaneselearning.user.factory.dto.entity.UserFactory;
+import com.japaneselearning.user.factory.dto.request.LoginRequestFactory;
 import com.japaneselearning.user.factory.dto.request.RegisterAccountRequestFactory;
 import com.japaneselearning.user.repository.UserRepository;
+import com.japaneselearning.user.security.JwtTokenService;
 import com.japaneselearning.user.service.impl.AuthServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +31,8 @@ import static org.mockito.Mockito.*;
 
 import org.mockito.Mock;
 
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceImplTest {
 
@@ -40,8 +48,12 @@ public class AuthServiceImplTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private JwtTokenService jwtTokenService;
+
     private static final String PASSWORD_HASH = "password_hash";
     private static final String REFRESH_TOKEN = "refresh_token";
+    private static final String RAW_REFRESH_TOKEN = "raw_refresh_token";
 
     @Test
     void registerAccount_shouldSuccess() {
@@ -100,6 +112,213 @@ public class AuthServiceImplTest {
                 ErrorCode.USER_USERNAME_ALREADY_EXISTS,
                 exception.getErrorCode()
         );
+    }
+
+    @Test
+    void login_shouldSuccess_usingEmail() {
+        User validUser = UserFactory.createValid();
+
+        LoginRequest validRequestWithEmail = LoginRequestFactory.createValidWithEmail();
+
+//        Arrange
+
+        when(userRepository.findByEmail(validRequestWithEmail.usernameOrEmail()))
+                .thenReturn(Optional.of(validUser));
+
+        when(passwordEncoder.matches(
+                validRequestWithEmail.password(),
+                validUser.getPasswordHash())
+        ).thenReturn(true);
+
+        JwtTokenService.GeneratedAccessToken accessToken = AccessTokenFactory.createValid();
+
+        when(jwtTokenService.generateAccessToken(validUser))
+                .thenReturn(accessToken);
+
+        when(refreshTokenService.createAndSaveRefreshToken(validUser))
+                .thenReturn(RAW_REFRESH_TOKEN);
+
+//        Act
+
+        LoginResponse response = authService.login(validRequestWithEmail);
+
+//        Assert
+
+        assertEquals(accessToken.token(), response.accessToken());
+        assertEquals(RAW_REFRESH_TOKEN, response.refreshToken());
+
+//        Verify
+
+        verify(userRepository).findByEmail(validRequestWithEmail.usernameOrEmail());
+
+        verify(passwordEncoder).matches(
+                validRequestWithEmail.password(),
+                validUser.getPasswordHash()
+        );
+
+        verify(jwtTokenService).generateAccessToken(validUser);
+
+        verify(refreshTokenService).createAndSaveRefreshToken(validUser);
+    }
+
+    @Test
+    void login_shouldSuccess_usingUsername() {
+        User validUser = UserFactory.createValid();
+
+        LoginRequest validRequestWithEmail = LoginRequestFactory.createValidWithUsername();
+
+//        Arrange
+
+        when(userRepository.findByUsername(validRequestWithEmail.usernameOrEmail()))
+                .thenReturn(Optional.of(validUser));
+
+        when(passwordEncoder.matches(
+                validRequestWithEmail.password(),
+                validUser.getPasswordHash())
+        ).thenReturn(true);
+
+        JwtTokenService.GeneratedAccessToken accessToken = AccessTokenFactory.createValid();
+
+        when(jwtTokenService.generateAccessToken(validUser))
+                .thenReturn(accessToken);
+
+        when(refreshTokenService.createAndSaveRefreshToken(validUser))
+                .thenReturn(RAW_REFRESH_TOKEN);
+
+//        Act
+
+        LoginResponse response = authService.login(validRequestWithEmail);
+
+//        Assert
+
+        assertEquals(accessToken.token(), response.accessToken());
+        assertEquals(RAW_REFRESH_TOKEN, response.refreshToken());
+
+//        Verify
+
+        verify(userRepository).findByUsername(validRequestWithEmail.usernameOrEmail());
+
+        verify(passwordEncoder).matches(
+                validRequestWithEmail.password(),
+                validUser.getPasswordHash()
+        );
+
+        verify(jwtTokenService).generateAccessToken(validUser);
+
+        verify(refreshTokenService).createAndSaveRefreshToken(validUser);
+    }
+
+    @Test
+    void login_shouldFailed_usingEmail_whenUserNotFound() {
+        LoginRequest validRequestWithEmail = LoginRequestFactory.createValidWithEmail();
+
+//        Arrange
+
+        when(userRepository.findByEmail(validRequestWithEmail.usernameOrEmail()))
+                .thenReturn(Optional.empty());
+
+//        Act
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> authService.login(validRequestWithEmail)
+        );
+
+//        Assert
+
+        assertEquals(ErrorCode.USER_INVALID_CREDENTIALS, exception.getErrorCode());
+
+//        Verify
+
+        verify(userRepository).findByEmail(validRequestWithEmail.usernameOrEmail());
+
+        verify(passwordEncoder, never()).matches(anyString(), anyString());
+
+        verify(jwtTokenService, never()).generateAccessToken(any(User.class));
+
+        verify(refreshTokenService, never()).createAndSaveRefreshToken(any(User.class));
+    }
+
+    @Test
+    void login_shouldFailed_usingEmail_whenPasswordNotMatched() {
+        User validUser = UserFactory.createValid();
+
+        LoginRequest validRequestWithEmail = LoginRequestFactory.createValidWithEmail();
+
+//        Arrange
+
+        when(userRepository.findByEmail(validRequestWithEmail.usernameOrEmail()))
+                .thenReturn(Optional.of(validUser));
+
+        when(passwordEncoder.matches(
+                validRequestWithEmail.password(),
+                validUser.getPasswordHash())
+        ).thenReturn(false);
+
+//        Act
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> authService.login(validRequestWithEmail)
+        );
+
+//        Assert
+
+        assertEquals(ErrorCode.USER_INVALID_CREDENTIALS, exception.getErrorCode());
+
+//        Verify
+
+        verify(userRepository).findByEmail(validRequestWithEmail.usernameOrEmail());
+
+        verify(passwordEncoder).matches(
+                validRequestWithEmail.password(),
+                validUser.getPasswordHash()
+        );
+
+        verify(jwtTokenService, never()).generateAccessToken(any(User.class));
+
+        verify(refreshTokenService, never()).createAndSaveRefreshToken(any(User.class));
+    }
+
+    @Test
+    void login_shouldFailed_usingEmail_whenAccountNotActivated() {
+        User deactivatedUser = UserFactory.createNotActivated();
+
+        LoginRequest validRequestWithEmail = LoginRequestFactory.createValidWithEmail();
+
+//        Arrange
+
+        when(userRepository.findByEmail(validRequestWithEmail.usernameOrEmail()))
+                .thenReturn(Optional.of(deactivatedUser));
+
+        when(passwordEncoder.matches(
+                validRequestWithEmail.password(),
+                deactivatedUser.getPasswordHash())
+        ).thenReturn(true);
+
+//        Act
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> authService.login(validRequestWithEmail)
+        );
+
+//        Assert
+
+        assertEquals(ErrorCode.USER_ACCOUNT_NOT_ACTIVATED, exception.getErrorCode());
+
+//        Verify
+
+        verify(userRepository).findByEmail(validRequestWithEmail.usernameOrEmail());
+
+        verify(passwordEncoder).matches(
+                validRequestWithEmail.password(),
+                deactivatedUser.getPasswordHash()
+        );
+
+        verify(jwtTokenService, never()).generateAccessToken(any(User.class));
+
+        verify(refreshTokenService, never()).createAndSaveRefreshToken(any(User.class));
     }
 
     @Test
