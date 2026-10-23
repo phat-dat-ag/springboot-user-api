@@ -64,11 +64,11 @@ public class UserManagementController extends BaseController {
     @GetMapping("/{id}")
     public ResponseEntity<@NonNull APIResponse<UserResponse>> getUser(
             @PathVariable
-            UUID uuid
+            UUID id
     ) {
         log.info("Received get all users request");
 
-        UserResponse response = userManagementService.getUser(uuid);
+        UserResponse response = userManagementService.getUser(id);
 
         log.info("Got all users successfully");
 
@@ -78,7 +78,7 @@ public class UserManagementController extends BaseController {
     @PatchMapping("{id}/activation")
     public ResponseEntity<@NonNull APIResponse<Void>> updateUserActivation(
             @PathVariable
-            UUID uuid,
+            UUID id,
 
             @Valid
             @RequestBody
@@ -86,7 +86,7 @@ public class UserManagementController extends BaseController {
     ) {
         log.info("Received update user activation request");
 
-        userManagementService.updateUserActivation(uuid, updateUserActivationRequest.isActivated());
+        userManagementService.updateUserActivation(id, updateUserActivationRequest.isActivated());
 
         log.info("Updated isActivated for user successfully");
 
