@@ -13,6 +13,7 @@ public enum ErrorCode {
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "HTTP method not allowed"),
 
 
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "user not found"),
     USER_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "Email is already registered"),
     USER_USERNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "username is already registered"),
 
@@ -22,6 +23,9 @@ public enum ErrorCode {
     AUTH_REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "refresh token not found"),
     AUTH_REFRESH_TOKEN_REVOKED(HttpStatus.FORBIDDEN, "refresh token has been already revoked"),
     AUTH_REFRESH_TOKEN_EXPIRED(HttpStatus.FORBIDDEN, "refresh token has been already expired"),
+
+    USER_MANAGEMENT_ACTIVATION_ACTIVATED(HttpStatus.CONFLICT, "user is activated, can not activate"),
+    USER_MANAGEMENT_ACTIVATION_DEACTIVATED(HttpStatus.CONFLICT, "user is deactivated, can not deactivate"),
 
     // Server errors
     INTERNAL_SERVER_ERROR(
