@@ -45,6 +45,11 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/.well-known/**"
                         ).permitAll()
+
+                        .requestMatchers(
+                                "/admin/users/**"
+                        ).hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
