@@ -118,6 +118,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     }
 
     @Override
+    @Transactional
     public void updateUserActivation(UUID uuid, boolean newActivationStatus) {
         User user = getUserByUUID(uuid);
 
