@@ -18,7 +18,7 @@
             <includeMdcKeyName>correlationId</includeMdcKeyName>
             <includeMdcKeyName>traceId</includeMdcKeyName>
             <includeMdcKeyName>spanId</includeMdcKeyName>
-            <customFields>{"service":"user"}</customFields>
+            <customFields>{"service":"${SERVICE_NAME}"}</customFields>
             <includeMdcKeyName>httpMethod</includeMdcKeyName>
             <includeMdcKeyName>uri</includeMdcKeyName>
             <includeMdcKeyName>status</includeMdcKeyName>
@@ -45,7 +45,7 @@
             <includeMdcKeyName>correlationId</includeMdcKeyName>
             <includeMdcKeyName>traceId</includeMdcKeyName>
             <includeMdcKeyName>spanId</includeMdcKeyName>
-            <customFields>{"service":"user"}</customFields>
+            <customFields>{"service":"${SERVICE_NAME}"}</customFields>
             <includeMdcKeyName>httpMethod</includeMdcKeyName>
             <includeMdcKeyName>uri</includeMdcKeyName>
             <includeMdcKeyName>status</includeMdcKeyName>
