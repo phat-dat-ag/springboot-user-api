@@ -7,10 +7,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.util.ArrayList;
 import java.util.List;
 
-@ConfigurationProperties(prefix = "app.security.jwks")
+@ConfigurationProperties(prefix = "app.security.signing")
 @Getter
 @Setter
-public class RsaKeyProperties {
+public class SigningKeyProperties {
 
     private List<Key> keys = new ArrayList<>();
 
@@ -20,7 +20,6 @@ public class RsaKeyProperties {
 
         private String kid;
         private String privateKeyPath;
-        private String publicKeyPath;
         private boolean active;
     }
 }

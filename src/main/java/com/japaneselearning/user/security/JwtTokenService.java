@@ -20,13 +20,12 @@ public class JwtTokenService {
 
     private final JwtProperties jwtProperties;
 
-    private final RsaKeyProvider rsaKeyProvider;
+    private final SigningKeyProvider signingKeyProvider;
     private final ObjectMapper objectMapper;
 
     public GeneratedAccessToken generateAccessToken(User user) {
         try {
-//            get active key in key list
-            RsaKeyProvider.KeyMaterial activeKey = getActiveSigningKey();
+            SigningKeyProvider.SigningKey activeKey = signingKeyProvider.getActiveSigningKey();
 
             Map<String, Object> header = createHeader(activeKey);
 
@@ -62,21 +61,8 @@ public class JwtTokenService {
         }
     }
 
-    private RsaKeyProvider.KeyMaterial getActiveSigningKey() {
-        return rsaKeyProvider.getKeys()
-                .values()
-                .stream()
-                .filter(RsaKeyProvider.KeyMaterial::active)
-                .findFirst()
-                .orElseThrow(() ->
-                        new IllegalStateException(
-                                "No active RSA signing key configured"
-                        )
-                );
-    }
-
     private Map<String, Object> createHeader(
-            RsaKeyProvider.KeyMaterial key
+            SigningKeyProvider.SigningKey key
     ) {
         return Map.of(
                 "alg", "RS256",
