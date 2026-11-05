@@ -50,6 +50,10 @@ public class SecurityConfig {
                         ).permitAll()
 
                         .requestMatchers(
+                                "/internal/users/*"
+                        ).permitAll()
+
+                        .requestMatchers(
                                 "/admin/users/**"
                         ).hasRole("ADMIN")
 
