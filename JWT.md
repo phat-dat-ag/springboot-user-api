@@ -2,15 +2,14 @@
 
 ## Signing
 
-`SigningKeyProperties` binds `app.security.signing.keys`. Docker Compose passes
-the root `.env` into the user container. For example:
+`SigningKeyProperties` binds `app.security.signing.keys`. Docker Compose loads `.env.user-api` into the User container and maps root deployment settings explicitly. For example:
 
 ```dotenv
 APP_SECURITY_SIGNING_KEYS_0_KID=user-rsa-v1
-APP_SECURITY_SIGNING_KEYS_0_PRIVATE_KEY_PATH=/run/keys/jwt/userservice-private-v1.pem
+APP_SECURITY_SIGNING_KEYS_0_PRIVATEKEYPATH=/run/keys/jwt/userservice-private-v1.pem
 APP_SECURITY_SIGNING_KEYS_0_ACTIVE=false
 APP_SECURITY_SIGNING_KEYS_1_KID=user-rsa-v2
-APP_SECURITY_SIGNING_KEYS_1_PRIVATE_KEY_PATH=/run/keys/jwt/userservice-private-v2.pem
+APP_SECURITY_SIGNING_KEYS_1_PRIVATEKEYPATH=/run/keys/jwt/userservice-private-v2.pem
 APP_SECURITY_SIGNING_KEYS_1_ACTIVE=true
 ```
 
@@ -56,10 +55,21 @@ The external JWKS must publish the public half of the active signing key with
 the same `kid`. Publish a new public key before switching signing keys and keep
 old public keys until their tokens expire (including allowed clock skew).
 
-## Deployment boundary
+## Isolated internal authentication
 
-This change removes public-key file loading from the user API. It does not
-change the sibling JWKS service or Docker mounts. The current shared key-directory
-mount still exposes every file in that directory to the container. Use mounts
-restricted to each service's own private keys to enforce filesystem isolation;
-a public-only JWKS service also requires changing its existing private-key loader.
+`SecurityConfig` orders a dedicated `/internal/**` filter chain before the external chain.
+`InternalJwtDecoderConfig` trusts only the configured Learning JWKS URI, issuer and subject
+`learning-service`, audience `user-service`, RS256 and `typ=internal+jwt`. It requires `kid`,
+`jti`, `iat`, `exp`, validates optional `nbf`, rejects future issuance beyond clock skew and
+limits token lifetime. Nimbus default type validation is explicitly disabled only on this
+internal decoder and replaced by the exact type check. External JWT validation is unchanged.
+
+An authenticated Learning identity receives only `SERVICE_LEARNING`; it never receives User
+or Admin roles. Only GET `/internal/users/*` is authorized. Missing/invalid tokens return 401,
+valid identities denied by route policy return 403. Both chains are stateless.
+
+Signing keys are mounted as individual private files into User only. JWKS receives only the
+public PEMs. Canonical indexed environment names use `PRIVATEKEYPATH`. The first-key legacy
+placeholder remains accepted as a migration fallback, but additional keys must use canonical names.
+
+See root `JWT-AUTHENTICATION.md` for variables, Docker paths and consumer migration.
