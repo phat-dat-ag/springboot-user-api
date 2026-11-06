@@ -38,8 +38,11 @@ class InternalUserControllerTest {
     @MockitoBean
     UserManagementService users;
 
-    @MockitoBean
+    @MockitoBean(name = "jwtDecoder")
     JwtDecoder jwtDecoder;
+
+    @MockitoBean(name = "internalJwtDecoder")
+    JwtDecoder internalJwtDecoder;
 
     private UserResponse user() {
         return new UserResponse(new UserDTO(ID, "test-user", "test@example.invalid", true,
@@ -47,9 +50,9 @@ class InternalUserControllerTest {
     }
 
     @Test
-    void internalEndpointRemainsUnauthenticatedAndReturnsUnwrappedUser() throws Exception {
+    void authenticatedServiceReturnsUnwrappedUser() throws Exception {
         given(users.getUser(ID)).willReturn(user());
-        mvc.perform(get("/internal/users/" + ID))
+        mvc.perform(get("/internal/users/" + ID).with(jwt().authorities(createAuthorityList("SERVICE_LEARNING"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.id").value(ID.toString()))
                 .andExpect(jsonPath("$.user.username").value("test-user"))
@@ -61,7 +64,7 @@ class InternalUserControllerTest {
     @Test
     void missingUserRetains404Envelope() throws Exception {
         given(users.getUser(ID)).willThrow(new BusinessException(ErrorCode.USER_NOT_FOUND));
-        mvc.perform(get("/internal/users/" + ID))
+        mvc.perform(get("/internal/users/" + ID).with(jwt().authorities(createAuthorityList("SERVICE_LEARNING"))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
@@ -70,7 +73,7 @@ class InternalUserControllerTest {
     @Test
     void malformedIdDoesNotCallService() throws Exception {
         // Preserve the shared exception handler's current response; changing it affects external APIs too.
-        mvc.perform(get("/internal/users/not-a-uuid")).andExpect(status().isInternalServerError());
+        mvc.perform(get("/internal/users/not-a-uuid").with(jwt().authorities(createAuthorityList("SERVICE_LEARNING")))).andExpect(status().isInternalServerError());
         verifyNoInteractions(users);
     }
 

@@ -25,7 +25,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class JwtDecoderConfigTest {
-    private static final String URI = "https://jwks.example/.well-known/jwks.json";
+    private static final String URI = "https://jwks.example/api/v1/jwks/user";
     private static final String TRACE = "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01";
 
     @AfterEach
