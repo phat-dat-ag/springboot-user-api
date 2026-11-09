@@ -1,4 +1,4 @@
-package com.japaneselearning.user.config;
+package com.japaneselearning.user.security.jwt.internal;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.restclient.RestTemplateBuilder;
@@ -16,6 +16,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import java.time.Duration;
 import java.time.Instant;
 
+/** Verifies Learning service identity tokens for the internal security chain. */
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(InternalJwtSecurityProperties.class)
 public class InternalJwtDecoderConfig {

@@ -17,7 +17,7 @@ import com.japaneselearning.user.factory.dto.request.LoginRequestFactory;
 import com.japaneselearning.user.factory.dto.request.RefreshTokenRequestFactory;
 import com.japaneselearning.user.factory.dto.request.RegisterAccountRequestFactory;
 import com.japaneselearning.user.repository.UserRepository;
-import com.japaneselearning.user.security.JwtTokenService;
+import com.japaneselearning.user.security.jwt.user.JwtTokenService;
 import com.japaneselearning.user.service.impl.AuthServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

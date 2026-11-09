@@ -1,10 +1,13 @@
-package com.japaneselearning.user.config;
+package com.japaneselearning.user.security.jwt.internal;
 
+import com.japaneselearning.user.security.config.InternalApiSecurityConfig;
+import com.japaneselearning.user.security.config.UserSecurityConfig;
+import com.japaneselearning.user.security.jwt.user.JwtDecoderConfig;
 import com.japaneselearning.user.controller.UserManagementController;
 import com.japaneselearning.user.controller.internal.InternalUserController;
 import com.japaneselearning.user.dto.UserDTO;
 import com.japaneselearning.user.dto.response.UserResponse;
-import com.japaneselearning.user.security.JwtRoleConverter;
+import com.japaneselearning.user.security.jwt.user.JwtRoleConverter;
 import com.japaneselearning.user.service.UserManagementService;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSASigner;
@@ -26,7 +29,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.restclient.RestTemplateBuilder;
-import com.japaneselearning.user.security.JwtProperties;
+import com.japaneselearning.user.security.jwt.user.JwtProperties;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -44,15 +47,24 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest({InternalUserController.class, UserManagementController.class})
-@Import({SecurityConfig.class, JwtDecoderConfig.class, InternalJwtDecoderConfig.class, JwtRoleConverter.class,
-        InternalJwtAuthenticationTest.ClientConfiguration.class})
+@Import({
+        InternalApiSecurityConfig.class,
+        UserSecurityConfig.class,
+        JwtDecoderConfig.class,
+        InternalJwtDecoderConfig.class,
+        JwtRoleConverter.class,
+        InternalJwtAuthenticationTest.ClientConfiguration.class
+})
 class InternalJwtAuthenticationTest {
     @TestConfiguration(proxyBeanMethods = false)
     @EnableConfigurationProperties(JwtProperties.class)
     static class ClientConfiguration {
         @Bean
-        RestTemplateBuilder restTemplateBuilder() { return new RestTemplateBuilder(); }
+        RestTemplateBuilder restTemplateBuilder() {
+            return new RestTemplateBuilder();
+        }
     }
+
     private static final UUID ID = UUID.fromString("f05bf709-5cb8-4a4c-9ac4-e537b5579aef");
     private static final String INTERNAL = "/internal/users/" + ID;
     private static final RSAKey USER = key("user-test-v1");
@@ -80,16 +92,30 @@ class InternalJwtAuthenticationTest {
 
     @BeforeEach
     void response() {
-        given(users.getUser(ID)).willReturn(new UserResponse(new UserDTO(ID, "test-user", "test@example.invalid",
-                true, null, null)));
+        given(users.getUser(ID)).willReturn(new UserResponse(
+                        new UserDTO(
+                                ID,
+                                "test-user",
+                                "test@example.invalid",
+                                true,
+                                null,
+                                null
+                        )
+                )
+        );
     }
 
     @AfterAll
-    static void stop() { SERVER.stop(0); }
+    static void stop() {
+        SERVER.stop(0);
+    }
 
     @Test
     void validLearningIdentityCanReadInternalUser() throws Exception {
-        mvc.perform(get(INTERNAL).header("Authorization", "Bearer " + token(LEARNING, claims(), "internal+jwt", LEARNING.getKeyID())))
+        mvc.perform(get(INTERNAL).header(
+                        "Authorization",
+                        "Bearer " + token(LEARNING, claims(), "internal+jwt", LEARNING.getKeyID())
+                ))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.user.id").value(ID.toString()));
     }
 
@@ -101,13 +127,17 @@ class InternalJwtAuthenticationTest {
     @ParameterizedTest
     @ValueSource(strings = {"issuer", "audience", "subject", "type", "signature", "kid", "noKid",
             "noIssuer", "noSubject", "noAudience", "noExpiry", "noIssuedAt", "noJti", "expired",
-            "futureIssuedAt", "futureNotBefore", "longLifetime", "invertedTimes", "algorithm"})
+            "futureIssuedAt", "futureNotBefore", "longLifetime", "invertedTimes", "algorithm"
+    })
     void invalidInternalTokensAreRejected(String problem) throws Exception {
         var claims = claims();
+
         String type = "internal+jwt";
         String kid = LEARNING.getKeyID();
+
         RSAKey signer = LEARNING;
         Instant now = Instant.now();
+
         switch (problem) {
             case "issuer" -> claims.issuer("untrusted");
             case "audience" -> claims.audience("another-service");
@@ -122,21 +152,29 @@ class InternalJwtAuthenticationTest {
             case "noExpiry" -> claims.expirationTime(null);
             case "noIssuedAt" -> claims.issueTime(null);
             case "noJti" -> claims.jwtID(null);
-            case "expired" -> claims.issueTime(Date.from(now.minusSeconds(120))).expirationTime(Date.from(now.minusSeconds(60)));
-            case "futureIssuedAt" -> claims.issueTime(Date.from(now.plusSeconds(30))).expirationTime(Date.from(now.plusSeconds(90)));
+            case "expired" ->
+                    claims.issueTime(Date.from(now.minusSeconds(120))).expirationTime(Date.from(now.minusSeconds(60)));
+            case "futureIssuedAt" ->
+                    claims.issueTime(Date.from(now.plusSeconds(30))).expirationTime(Date.from(now.plusSeconds(90)));
             case "futureNotBefore" -> claims.notBeforeTime(Date.from(now.plusSeconds(30)));
             case "longLifetime" -> claims.expirationTime(Date.from(now.plusSeconds(301)));
             case "invertedTimes" -> claims.expirationTime(Date.from(now.minusSeconds(1)));
         }
+
         String token;
+
         if (problem.equals("algorithm")) {
-            var jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS512).type(new JOSEObjectType(type)).keyID(kid).build(), claims.build());
+            var jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS512)
+                    .type(new JOSEObjectType(type)).keyID(kid).build(), claims.build());
+
             jwt.sign(new RSASSASigner(signer));
             token = jwt.serialize();
         } else {
             token = token(signer, claims, type, kid);
         }
-        mvc.perform(get(INTERNAL).header("Authorization", "Bearer " + token)).andExpect(status().isUnauthorized());
+
+        mvc.perform(get(INTERNAL).header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -150,15 +188,20 @@ class InternalJwtAuthenticationTest {
                 token(LEARNING, userClaims(2), "JWT", LEARNING.getKeyID()))).andExpect(status().isUnauthorized());
         mvc.perform(get("/admin/users/" + ID).header("Authorization", "Bearer " + user)).andExpect(status().isForbidden());
         mvc.perform(get("/admin/users/" + ID).header("Authorization", "Bearer " +
-                token(USER, userClaims(2), "JWT", USER.getKeyID()))).andExpect(status().isOk())
+                        token(USER, userClaims(2), "JWT", USER.getKeyID()))).andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
         mvc.perform(post(INTERNAL).header("Authorization", "Bearer " + internal)).andExpect(status().isForbidden());
         mvc.perform(get("/internal/other").header("Authorization", "Bearer " + internal)).andExpect(status().isForbidden());
     }
 
     private static JWTClaimsSet.Builder claims() {
-        return new JWTClaimsSet.Builder().issuer("learning-service").subject("learning-service").audience("user-service")
-                .issueTime(new Date()).expirationTime(Date.from(Instant.now().plusSeconds(60))).jwtID(UUID.randomUUID().toString());
+        return new JWTClaimsSet.Builder()
+                .issuer("learning-service")
+                .subject("learning-service")
+                .audience("user-service")
+                .issueTime(new Date())
+                .expirationTime(Date.from(Instant.now().plusSeconds(60)))
+                .jwtID(UUID.randomUUID().toString());
     }
 
     private static JWTClaimsSet.Builder userClaims(int role) {
@@ -166,29 +209,52 @@ class InternalJwtAuthenticationTest {
     }
 
     private static String token(RSAKey key, JWTClaimsSet.Builder claims, String type, String kid) throws Exception {
-        var jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).type(new JOSEObjectType(type)).keyID(kid).build(), claims.build());
+        var jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256)
+                .type(new JOSEObjectType(type))
+                .keyID(kid)
+                .build(),
+                claims.build()
+        );
+
         jwt.sign(new RSASSASigner(key));
+
         return jwt.serialize();
     }
 
     private static RSAKey key(String kid) {
-        try { return new RSAKeyGenerator(2048).keyID(kid).generate(); }
-        catch (Exception ex) { throw new IllegalStateException(ex); }
+        try {
+            return new RSAKeyGenerator(2048).keyID(kid).generate();
+        } catch (Exception ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
     private static HttpServer server() {
         try {
             var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+
             for (var owner : new String[]{"user", "learning"}) {
-                byte[] body = new JWKSet((owner.equals("user") ? USER : LEARNING).toPublicJWK()).toString().getBytes(StandardCharsets.UTF_8);
+                byte[] body = new JWKSet(
+                        (owner.equals("user")
+                                ? USER
+                                : LEARNING
+                        ).toPublicJWK()).toString().getBytes(StandardCharsets.UTF_8);
+
                 server.createContext("/api/v1/jwks/" + owner, exchange -> {
                     exchange.getResponseHeaders().set("Content-Type", "application/json");
                     exchange.sendResponseHeaders(200, body.length);
-                    try (var out = exchange.getResponseBody()) { out.write(body); }
+
+                    try (var out = exchange.getResponseBody()) {
+                        out.write(body);
+                    }
                 });
             }
+
             server.start();
+
             return server;
-        } catch (Exception ex) { throw new IllegalStateException(ex); }
+        } catch (Exception ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 }

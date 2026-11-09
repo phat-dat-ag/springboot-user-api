@@ -5,7 +5,7 @@ import com.japaneselearning.user.common.exception.ErrorCode;
 import com.japaneselearning.user.entity.RefreshToken;
 import com.japaneselearning.user.entity.User;
 import com.japaneselearning.user.repository.RefreshTokenRepository;
-import com.japaneselearning.user.security.JwtProperties;
+import com.japaneselearning.user.security.jwt.user.JwtProperties;
 import com.japaneselearning.user.service.RefreshTokenService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;

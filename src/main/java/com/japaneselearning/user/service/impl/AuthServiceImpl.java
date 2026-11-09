@@ -7,7 +7,7 @@ import com.japaneselearning.user.dto.request.RefreshTokenRequest;
 import com.japaneselearning.user.dto.response.LoginResponse;
 import com.japaneselearning.user.dto.response.RefreshTokenResponse;
 import com.japaneselearning.user.entity.RefreshToken;
-import com.japaneselearning.user.security.JwtTokenService;
+import com.japaneselearning.user.security.jwt.user.JwtTokenService;
 import com.japaneselearning.user.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;

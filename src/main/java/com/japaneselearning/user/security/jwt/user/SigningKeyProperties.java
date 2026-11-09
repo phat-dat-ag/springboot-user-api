@@ -1,4 +1,4 @@
-package com.japaneselearning.user.config;
+package com.japaneselearning.user.security.jwt.user;
 
 import lombok.Getter;
 import lombok.Setter;

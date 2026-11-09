@@ -1,5 +1,6 @@
-package com.japaneselearning.user.security;
+package com.japaneselearning.user.security.jwt.user;
 
+import lombok.NonNull;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class JwtRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
+public class JwtRoleConverter implements Converter<@NonNull Jwt, Collection<GrantedAuthority>> {
 
     private static final Map<String, String> ROLE_MAPPING = Map.of(
             "1", "ROLE_USER",

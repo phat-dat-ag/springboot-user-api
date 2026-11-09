@@ -1,7 +1,6 @@
-package com.japaneselearning.user.security;
+package com.japaneselearning.user.security.jwt.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.japaneselearning.user.config.SigningKeyProperties;
 import com.japaneselearning.user.entity.User;
 import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.BeforeEach;
