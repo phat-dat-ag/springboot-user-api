@@ -1,6 +1,6 @@
 package com.japaneselearning.user.factory.dto.entity;
 
-import com.japaneselearning.user.security.JwtTokenService;
+import com.japaneselearning.user.security.jwt.user.JwtTokenService;
 
 public class AccessTokenFactory {
     public static JwtTokenService.GeneratedAccessToken createValid() {

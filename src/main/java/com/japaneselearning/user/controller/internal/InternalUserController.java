@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+/**
+ * Service-to-service user lookup. InternalApiSecurityConfig authenticates Learning before
+ * dispatching here. Success returns UserResponse directly, without APIResponse.
+ */
 @RestController
 @RequestMapping("/internal/users")
 @RequiredArgsConstructor

@@ -1,4 +1,4 @@
-package com.japaneselearning.user.config;
+package com.japaneselearning.user.security.jwt.internal;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

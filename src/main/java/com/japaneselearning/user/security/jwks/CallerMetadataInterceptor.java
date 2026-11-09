@@ -1,4 +1,4 @@
-package com.japaneselearning.user.config;
+package com.japaneselearning.user.security.jwks;
 
 import com.japaneselearning.user.common.filter.CorrelationIdFilter;
 import org.slf4j.MDC;
@@ -11,14 +11,16 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Adds self-reported caller metadata without changing instrumentation's trace headers.
+ * Adds diagnostic caller metadata to outbound JWKS requests.
+ * These self-reported headers are not authentication credentials.
+ * Instrumentation's trace headers are left unchanged.
  */
-final class JwksCallerInterceptor implements ClientHttpRequestInterceptor {
+public final class CallerMetadataInterceptor implements ClientHttpRequestInterceptor {
     private final String service;
     private final String instance;
     private final String version;
 
-    JwksCallerInterceptor(String service, String instance, String version) {
+    public CallerMetadataInterceptor(String service, String instance, String version) {
         this.service = identity(service);
         this.instance = identity(instance);
         this.version = identity(version);

@@ -2,11 +2,12 @@ package com.japaneselearning.user.controller.internal;
 
 import com.japaneselearning.user.common.exception.BusinessException;
 import com.japaneselearning.user.common.exception.ErrorCode;
-import com.japaneselearning.user.config.SecurityConfig;
+import com.japaneselearning.user.security.config.InternalApiSecurityConfig;
+import com.japaneselearning.user.security.config.UserSecurityConfig;
 import com.japaneselearning.user.controller.UserManagementController;
 import com.japaneselearning.user.dto.UserDTO;
 import com.japaneselearning.user.dto.response.UserResponse;
-import com.japaneselearning.user.security.JwtRoleConverter;
+import com.japaneselearning.user.security.jwt.user.JwtRoleConverter;
 import com.japaneselearning.user.service.UserManagementService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @WebMvcTest({InternalUserController.class, UserManagementController.class})
-@Import({SecurityConfig.class, JwtRoleConverter.class})
+@Import({InternalApiSecurityConfig.class, UserSecurityConfig.class, JwtRoleConverter.class})
 class InternalUserControllerTest {
     private static final UUID ID = UUID.fromString("f05bf709-5cb8-4a4c-9ac4-e537b5579aef");
 

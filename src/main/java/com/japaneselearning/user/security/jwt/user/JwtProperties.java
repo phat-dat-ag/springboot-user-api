@@ -1,4 +1,4 @@
-package com.japaneselearning.user.security;
+package com.japaneselearning.user.security.jwt.user;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

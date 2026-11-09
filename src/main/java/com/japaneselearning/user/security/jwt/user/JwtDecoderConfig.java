@@ -1,6 +1,6 @@
-package com.japaneselearning.user.config;
+package com.japaneselearning.user.security.jwt.user;
 
-import com.japaneselearning.user.security.JwtProperties;
+import com.japaneselearning.user.security.jwks.CallerMetadataInterceptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
@@ -11,6 +11,9 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
+/**
+ * Configures incoming user-token verification, independently of service tokens.
+ */
 @Configuration
 public class JwtDecoderConfig {
 
@@ -27,7 +30,7 @@ public class JwtDecoderConfig {
         NimbusJwtDecoder decoder = NimbusJwtDecoder
                 .withJwkSetUri(jwkSetUri)
                 .restOperations(restTemplateBuilder.additionalInterceptors(
-                                new JwksCallerInterceptor(service, instance, version)
+                                new CallerMetadataInterceptor(service, instance, version)
                         ).build()
                 )
                 .jwsAlgorithm(SignatureAlgorithm.RS256)

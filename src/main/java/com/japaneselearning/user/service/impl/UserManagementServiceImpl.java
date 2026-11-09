@@ -74,7 +74,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         return PageResponse.from(userPage);
     }
 
-    private User getUserByUUID(UUID uuid) {
+    private User findUserOrThrow(UUID uuid) {
         Optional<User> optionalUser = userRepository.findById(uuid);
 
         if (optionalUser.isEmpty()) {
@@ -88,7 +88,7 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Override
     public UserResponse getUser(UUID uuid) {
-        User user = getUserByUUID(uuid);
+        User user = findUserOrThrow(uuid);
 
         log.info("Got user successfully, uuid={}", user.getId());
 
@@ -120,7 +120,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     @Override
     @Transactional
     public void updateUserActivation(UUID uuid, boolean newActivationStatus) {
-        User user = getUserByUUID(uuid);
+        User user = findUserOrThrow(uuid);
 
         validateActivationStatus(user.isActivated(), newActivationStatus);
 

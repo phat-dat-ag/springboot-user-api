@@ -1,5 +1,8 @@
 # JWT signing and verification
 
+For the package map, endpoint permissions, error behavior, and a step-by-step
+internal lookup walkthrough, start with [README.md](README.md).
+
 ## Signing
 
 `SigningKeyProperties` binds `app.security.signing.keys`. Docker Compose loads `.env.user-api` into the User container and maps root deployment settings explicitly. For example:
@@ -57,7 +60,7 @@ old public keys until their tokens expire (including allowed clock skew).
 
 ## Isolated internal authentication
 
-`SecurityConfig` orders a dedicated `/internal/**` filter chain before the external chain.
+`InternalApiSecurityConfig` orders the `/internal/**` chain first; `UserSecurityConfig` supplies the external chain second.
 `InternalJwtDecoderConfig` trusts only the configured Learning JWKS URI, issuer and subject
 `learning-service`, audience `user-service`, RS256 and `typ=internal+jwt`. It requires `kid`,
 `jti`, `iat`, `exp`, validates optional `nbf`, rejects future issuance beyond clock skew and

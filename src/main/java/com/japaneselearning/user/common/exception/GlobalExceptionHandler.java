@@ -20,6 +20,11 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 
+/**
+ * Maps MVC/application exceptions to the APIResponse error envelope, including
+ * errors from internal controllers. Authentication and authorization failures
+ * handled by Spring Security use its separate response handling.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

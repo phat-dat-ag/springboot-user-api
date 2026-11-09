@@ -1,4 +1,4 @@
-package com.japaneselearning.user.security;
+package com.japaneselearning.user.security.jwt.user;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

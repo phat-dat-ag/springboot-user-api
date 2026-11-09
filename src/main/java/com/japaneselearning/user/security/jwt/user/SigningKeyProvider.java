@@ -1,6 +1,5 @@
-package com.japaneselearning.user.security;
+package com.japaneselearning.user.security.jwt.user;
 
-import com.japaneselearning.user.config.SigningKeyProperties;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

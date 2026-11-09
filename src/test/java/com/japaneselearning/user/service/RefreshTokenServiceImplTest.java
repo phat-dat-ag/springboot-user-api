@@ -7,7 +7,7 @@ import com.japaneselearning.user.entity.User;
 import com.japaneselearning.user.factory.dto.entity.RefreshTokenFactory;
 import com.japaneselearning.user.factory.dto.entity.UserFactory;
 import com.japaneselearning.user.repository.RefreshTokenRepository;
-import com.japaneselearning.user.security.JwtProperties;
+import com.japaneselearning.user.security.jwt.user.JwtProperties;
 import com.japaneselearning.user.service.impl.RefreshTokenServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
