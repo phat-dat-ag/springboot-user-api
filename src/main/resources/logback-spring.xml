@@ -6,7 +6,17 @@
             scope="context"
             name="SERVICE_NAME"
             source="spring.application.name"
-            defaultValue="user"/>
+            defaultValue="user-learning"/>
+
+    <!-- Stable metadata only; request-field/schema migration belongs to Phase 1. -->
+    <springProperty scope="context"
+                    name="SERVICE_VERSION"
+                    source="app.version"
+                    defaultValue="unknown"/>
+    <springProperty scope="context"
+                    name="DEPLOYMENT_ENVIRONMENT"
+                    source="app.deployment-environment"
+                    defaultValue="development"/>
 
     <property name="LOG_DIR" value="${APP_LOG_DIR:-./logs}"/>
     <property name="APP_NAME" value="${APP_NAME:-user-api}"/>
@@ -15,10 +25,17 @@
     <!-- Console appender -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeContext>false</includeContext>
             <includeMdcKeyName>correlationId</includeMdcKeyName>
             <includeMdcKeyName>traceId</includeMdcKeyName>
             <includeMdcKeyName>spanId</includeMdcKeyName>
-            <customFields>{"service":"${SERVICE_NAME}"}</customFields>
+            <customFields>
+                {
+                "service":"${SERVICE_NAME}",
+                "serviceVersion":"${SERVICE_VERSION}",
+                "environment":"${DEPLOYMENT_ENVIRONMENT}"
+                }
+            </customFields>
             <includeMdcKeyName>httpMethod</includeMdcKeyName>
             <includeMdcKeyName>uri</includeMdcKeyName>
             <includeMdcKeyName>status</includeMdcKeyName>
@@ -42,10 +59,17 @@
         </rollingPolicy>
 
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeContext>false</includeContext>
             <includeMdcKeyName>correlationId</includeMdcKeyName>
             <includeMdcKeyName>traceId</includeMdcKeyName>
             <includeMdcKeyName>spanId</includeMdcKeyName>
-            <customFields>{"service":"${SERVICE_NAME}"}</customFields>
+            <customFields>
+                {
+                "service":"${SERVICE_NAME}",
+                "serviceVersion":"${SERVICE_VERSION}",
+                "environment":"${DEPLOYMENT_ENVIRONMENT}"
+                }
+            </customFields>
             <includeMdcKeyName>httpMethod</includeMdcKeyName>
             <includeMdcKeyName>uri</includeMdcKeyName>
             <includeMdcKeyName>status</includeMdcKeyName>
