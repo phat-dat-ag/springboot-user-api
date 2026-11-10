@@ -42,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
                 .toLowerCase(Locale.ROOT);
 
         if (userRepository.existsByEmail(email)) {
-            log.warn("Email already exists: {}", registerAccountRequest.email());
+            log.debug("Registration rejected: email already registered");
 
             throw new BusinessException(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
         }
@@ -50,7 +50,7 @@ public class AuthServiceImpl implements AuthService {
         String username = registerAccountRequest.username().trim();
 
         if (userRepository.existsByUsername(username)) {
-            log.warn("username already exists: {}", registerAccountRequest.username());
+            log.debug("Registration rejected: username already registered");
 
             throw new BusinessException(ErrorCode.USER_USERNAME_ALREADY_EXISTS);
         }
@@ -62,10 +62,7 @@ public class AuthServiceImpl implements AuthService {
 
         User savedUser = userRepository.save(user);
 
-        log.info(
-                "User registration successfully, userId={}",
-                savedUser.getId()
-        );
+        log.atInfo().addKeyValue("event", "auth.registration.succeeded").log("Account registered");
 
         return new RegisterAccountResponse(
                 savedUser.getId(),
@@ -86,13 +83,13 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (user == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
-            log.warn("Invalid credential: user not found or password not matched");
+            log.debug("Login rejected: invalid credentials");
 
             throw new BusinessException(ErrorCode.USER_INVALID_CREDENTIALS);
         }
 
         if (!user.isActivated()) {
-            log.warn("account not activated: userId={}", user.getId());
+            log.debug("Login rejected: account inactive");
 
             throw new BusinessException(ErrorCode.USER_ACCOUNT_NOT_ACTIVATED);
         }
@@ -112,7 +109,7 @@ public class AuthServiceImpl implements AuthService {
 
         String rawRefreshToken = refreshTokenService.createAndSaveRefreshToken(user);
 
-        log.info("User login successfully, userId={}", user.getId());
+        log.atInfo().addKeyValue("event", "auth.login.succeeded").log("User authenticated");
 
         return new LoginResponse(
                 "Bearer",
@@ -133,10 +130,7 @@ public class AuthServiceImpl implements AuthService {
         JwtTokenService.GeneratedAccessToken accessToken
                 = jwtTokenService.generateAccessToken(oldRefreshToken.getUser());
 
-        log.info(
-                "Refresh token successfully, revoked refreshTokenId={}",
-                oldRefreshToken.getId()
-        );
+        log.atInfo().addKeyValue("event", "auth.refresh.succeeded").log("Refresh token rotated");
 
         return new RefreshTokenResponse(
                 accessToken.token(),
@@ -152,10 +146,7 @@ public class AuthServiceImpl implements AuthService {
 
         refreshTokenService.validateRefreshToken(oldRefreshToken);
 
-        log.info(
-                "Logout successfully, revoked refreshTokenId={}",
-                oldRefreshToken.getId()
-        );
+        log.atInfo().addKeyValue("event", "auth.logout.succeeded").log("Refresh session revoked");
 
         refreshTokenService.revokeToken(oldRefreshToken);
     }

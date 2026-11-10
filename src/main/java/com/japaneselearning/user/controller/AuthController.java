@@ -34,18 +34,9 @@ public class AuthController extends BaseController {
     public ResponseEntity<@NonNull APIResponse<RegisterAccountResponse>> registerAccount(
             @Valid @RequestBody RegisterAccountRequest registerAccountRequest
     ) {
-        log.info(
-                "Received account registration request: username={}, email={}",
-                registerAccountRequest.username(),
-                registerAccountRequest.email()
-        );
+        log.debug("Account registration requested");
 
         RegisterAccountResponse response = authService.registerAccount(registerAccountRequest);
-
-        log.info(
-                "Account registration completed successfully: username={}",
-                registerAccountRequest.username()
-        );
 
         return success(response);
     }
@@ -55,11 +46,9 @@ public class AuthController extends BaseController {
     public ResponseEntity<@NonNull APIResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest loginRequest
     ) {
-        log.info("Received login request: identifier={}", loginRequest.usernameOrEmail());
+        log.debug("Login requested");
 
         LoginResponse response = authService.login(loginRequest);
-
-        log.info("Login completed successfully");
 
         return success(response);
     }
@@ -68,11 +57,9 @@ public class AuthController extends BaseController {
     public ResponseEntity<@NonNull APIResponse<RefreshTokenResponse>> refresh(
             @Valid @RequestBody RefreshTokenRequest refreshTokenRequest
     ) {
-        log.info("Received refresh token request");
+        log.debug("Token refresh requested");
 
         RefreshTokenResponse response = authService.refreshToken(refreshTokenRequest);
-
-        log.info("Refresh token completed successfully");
 
         return success(response);
     }
@@ -82,11 +69,9 @@ public class AuthController extends BaseController {
             @Valid @RequestBody LogoutRequest logoutRequest,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        log.info("Received logout request: userId={}", jwt.getSubject());
+        log.debug("Logout requested");
 
         authService.logout(logoutRequest.refreshToken());
-
-        log.info("Logout completed successfully");
 
         return successWithoutContent();
     }
