@@ -66,11 +66,11 @@ public class UserManagementController extends BaseController {
             @PathVariable
             UUID id
     ) {
-        log.info("Received get all users request");
+        log.debug("User lookup requested");
 
         UserResponse response = userManagementService.getUser(id);
 
-        log.info("Got all users successfully");
+        log.debug("User lookup completed");
 
         return success(response);
     }
@@ -84,11 +84,11 @@ public class UserManagementController extends BaseController {
             @RequestBody
             UpdateUserActivationRequest updateUserActivationRequest
     ) {
-        log.info("Received update user activation request");
+        log.debug("User activation update requested");
 
         userManagementService.updateUserActivation(id, updateUserActivationRequest.isActivated());
 
-        log.info("Updated isActivated for user successfully");
+        log.debug("User activation update completed");
 
         return successWithoutContent();
     }

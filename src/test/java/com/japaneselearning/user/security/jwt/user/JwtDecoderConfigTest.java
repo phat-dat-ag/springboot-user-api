@@ -1,6 +1,6 @@
 package com.japaneselearning.user.security.jwt.user;
 
-import com.japaneselearning.user.common.filter.CorrelationIdFilter;
+import com.japaneselearning.user.logging.filter.RequestLoggingFilter;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -13,6 +13,9 @@ import org.slf4j.MDC;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.core.annotation.Order;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.time.Instant;
 import java.util.Date;
@@ -34,46 +37,47 @@ class JwtDecoderConfigTest {
 
     @Test
     void correlationFilterRunsBeforeSecurityAndCleansRequestContext() throws Exception {
-        var order = CorrelationIdFilter.class.getAnnotation(org.springframework.core.annotation.Order.class);
+        var order = RequestLoggingFilter.class.getAnnotation(Order.class);
 
         assertTrue(order.value() < -100); // Spring Boot's default security filter order
 
-        var response = new org.springframework.mock.web.MockHttpServletResponse();
+        var response = new MockHttpServletResponse();
 
-        new CorrelationIdFilter().doFilter(new org.springframework.mock.web.MockHttpServletRequest(), response,
+        new RequestLoggingFilter().doFilter(new MockHttpServletRequest(), response,
                 (request, servletResponse) -> {
-                    String id = MDC.get(CorrelationIdFilter.CORRELATION_ID);
+                    String id = MDC.get(RequestLoggingFilter.CORRELATION_ID);
+
                     assertNotNull(id);
-                    assertEquals(id, response.getHeader(CorrelationIdFilter.HEADER_NAME));
+                    assertEquals(id, response.getHeader(RequestLoggingFilter.HEADER_NAME));
                     assertDoesNotThrow(() -> UUID.fromString(id));
                 });
 
-        assertNull(MDC.get(CorrelationIdFilter.CORRELATION_ID));
+        assertNull(MDC.get(RequestLoggingFilter.CORRELATION_ID));
     }
 
     @Test
     void decoderSendsCallerAndCurrentCorrelationAndPreservesBuilderTracing() throws Exception {
-        MDC.put(CorrelationIdFilter.CORRELATION_ID, "request-123");
+        MDC.put(RequestLoggingFilter.CORRELATION_ID, "request-123");
 
         decodeWithHeaders("user-service", "user-pod-7", "1.2.3", "request-123");
 
-        assertEquals("request-123", MDC.get(CorrelationIdFilter.CORRELATION_ID));
+        assertEquals("request-123", MDC.get(RequestLoggingFilter.CORRELATION_ID));
     }
 
     @Test
     void generatesCorrelationWithoutLeakingMdc() throws Exception {
         decodeWithHeaders("user-service", "user-pod-7", "1.2.3", null);
 
-        assertNull(MDC.get(CorrelationIdFilter.CORRELATION_ID));
+        assertNull(MDC.get(RequestLoggingFilter.CORRELATION_ID));
     }
 
     @Test
     void invalidMetadataUsesContractSafeFallbacks() throws Exception {
-        MDC.put(CorrelationIdFilter.CORRELATION_ID, "bad\r\nvalue");
+        MDC.put(RequestLoggingFilter.CORRELATION_ID, "bad\r\nvalue");
 
         decodeWithHeaders("invalid service", "a".repeat(65), "", null);
 
-        assertEquals("bad\r\nvalue", MDC.get(CorrelationIdFilter.CORRELATION_ID));
+        assertEquals("bad\r\nvalue", MDC.get(RequestLoggingFilter.CORRELATION_ID));
     }
 
     private void decodeWithHeaders(

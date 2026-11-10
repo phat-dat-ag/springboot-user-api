@@ -1,6 +1,7 @@
 package com.japaneselearning.user.security.jwt.internal;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import com.japaneselearning.user.security.jwks.CallerMetadataInterceptor;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,18 +17,21 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import java.time.Duration;
 import java.time.Instant;
 
-/** Verifies Learning service identity tokens for the internal security chain. */
+/**
+ * Verifies Learning service identity tokens for the internal security chain.
+ */
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(InternalJwtSecurityProperties.class)
 public class InternalJwtDecoderConfig {
     @Bean("internalJwtDecoder")
     public JwtDecoder internalJwtDecoder(
             InternalJwtSecurityProperties properties,
-            RestTemplateBuilder builder
+            RestTemplateBuilder builder,
+            CallerMetadataInterceptor caller
     ) {
         var decoder = NimbusJwtDecoder.withJwkSetUri(properties.jwkSetUri())
                 .restOperations(
-                        builder.connectTimeout(Duration.ofSeconds(3))
+                        builder.additionalInterceptors(caller).connectTimeout(Duration.ofSeconds(3))
                                 .readTimeout(Duration.ofSeconds(5))
                                 .build()
                 )

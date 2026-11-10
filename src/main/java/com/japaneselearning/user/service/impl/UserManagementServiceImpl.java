@@ -61,15 +61,10 @@ public class UserManagementServiceImpl implements UserManagementService {
                         user.getUpdatedAt()
                 ));
 
-        log.info(
-                "Got all users successfully, "
-                        + "condition: isActivated={}, usernamePattern={}, emailPattern={}"
-                        + "result: contentCount={}, page={}, size={}, "
-                        + "totalElements={}, totalPages={}",
-                isActivated, usernamePattern, emailPattern,
-                userPage.getContent().size(), userPage.getNumber(), userPage.getSize(),
-                userPage.getTotalElements(), userPage.getTotalPages()
-        );
+        log.atDebug()
+                .addKeyValue("event", "users.list.completed")
+                .addKeyValue("resultCount", userPage.getNumberOfElements())
+                .log("User search completed");
 
         return PageResponse.from(userPage);
     }
@@ -78,7 +73,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         Optional<User> optionalUser = userRepository.findById(uuid);
 
         if (optionalUser.isEmpty()) {
-            log.warn("User not found, uuid={}", uuid);
+            log.debug("User lookup returned no account");
 
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
@@ -90,7 +85,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     public UserResponse getUser(UUID uuid) {
         User user = findUserOrThrow(uuid);
 
-        log.info("Got user successfully, uuid={}", user.getId());
+        log.debug("User lookup completed");
 
         return new UserResponse(new UserDTO(
                 user.getId(),
@@ -104,10 +99,7 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     private void validateActivationStatus(boolean currentStatus, boolean newStatus) {
         if (currentStatus == newStatus) {
-            log.warn(
-                    "Invalid activation status: currentStatus={}, newStatus={}",
-                    currentStatus, newStatus
-            );
+            log.debug("Activation update rejected: status unchanged");
 
             if (currentStatus) {
                 throw new BusinessException(ErrorCode.USER_MANAGEMENT_ACTIVATION_ACTIVATED);
@@ -128,9 +120,8 @@ public class UserManagementServiceImpl implements UserManagementService {
 
         userRepository.save(user);
 
-        log.info(
-                "Updated new activation status successfully, uuid={}, isActivated={}",
-                uuid, newActivationStatus
-        );
+        log.atInfo()
+                .addKeyValue("event", "users.activation.updated")
+                .log("User activation updated");
     }
 }

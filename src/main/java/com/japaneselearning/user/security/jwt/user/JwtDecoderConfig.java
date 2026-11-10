@@ -30,7 +30,7 @@ public class JwtDecoderConfig {
         NimbusJwtDecoder decoder = NimbusJwtDecoder
                 .withJwkSetUri(jwkSetUri)
                 .restOperations(restTemplateBuilder.additionalInterceptors(
-                                new CallerMetadataInterceptor(service, instance, version)
+                                jwksCallerMetadataInterceptor(service, instance, version)
                         ).build()
                 )
                 .jwsAlgorithm(SignatureAlgorithm.RS256)
@@ -43,5 +43,14 @@ public class JwtDecoderConfig {
         );
 
         return decoder;
+    }
+
+    @Bean
+    public CallerMetadataInterceptor jwksCallerMetadataInterceptor(
+            @Value("${app.security.jwks.caller-service}") String service,
+            @Value("${app.security.jwks.caller-instance}") String instance,
+            @Value("${app.security.jwks.caller-version}") String version
+    ) {
+        return new CallerMetadataInterceptor(service, instance, version);
     }
 }

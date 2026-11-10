@@ -33,19 +33,13 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     public void validateRefreshToken(RefreshToken refreshToken) {
         if (refreshToken.isRevoked()) {
-            log.warn(
-                    "Refresh token has already been revoked, refreshTokenId={}",
-                    refreshToken.getId()
-            );
+            log.debug("Refresh rejected: session already revoked");
 
             throw new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED);
         }
 
         if (refreshToken.isExpired()) {
-            log.warn(
-                    "Refresh token has already been expired, refreshTokenId={}",
-                    refreshToken.getId()
-            );
+            log.debug("Refresh rejected: session expired");
 
             throw new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_EXPIRED);
         }
@@ -56,10 +50,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
         refreshTokenRepository.save(refreshToken);
 
-        log.info(
-                "Revoked refreshToken successfully, refreshTokenId={}",
-                refreshToken.getId()
-        );
+        log.debug("Refresh session marked revoked");
     }
 
     @Override
@@ -75,10 +66,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         return refreshTokenRepository.findByTokenHash(refreshTokenHash)
                 .orElseThrow(
                         () -> {
-                            log.warn(
-                                    "refreshToken not found, refreshTokenHash={}",
-                                    refreshTokenHash
-                            );
+                            log.debug("Refresh rejected: token not found");
 
                             return new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_NOT_FOUND);
                         }
@@ -136,10 +124,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
         RefreshToken savedRefreshToken = refreshTokenRepository.save(refreshToken);
 
-        log.info(
-                "Created refreshToken successfully, refreshTokenId={}",
-                savedRefreshToken.getId()
-        );
+        log.debug("Refresh session created");
 
         return rawRefreshToken;
     }

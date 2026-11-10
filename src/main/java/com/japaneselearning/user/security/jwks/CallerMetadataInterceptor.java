@@ -1,6 +1,6 @@
 package com.japaneselearning.user.security.jwks;
 
-import com.japaneselearning.user.common.filter.CorrelationIdFilter;
+import com.japaneselearning.user.logging.filter.RequestLoggingFilter;
 import org.slf4j.MDC;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
@@ -45,10 +45,13 @@ public final class CallerMetadataInterceptor implements ClientHttpRequestInterce
         headers.set("X-Caller-Instance", instance);
         headers.set("X-Caller-Version", version);
 
-        String correlationId = MDC.get(CorrelationIdFilter.CORRELATION_ID);
+        String correlationId = MDC.get(RequestLoggingFilter.CORRELATION_ID);
 
-        headers.set(CorrelationIdFilter.HEADER_NAME,
-                valid(correlationId) ? correlationId : UUID.randomUUID().toString()
+        headers.set(
+                RequestLoggingFilter.HEADER_NAME,
+                valid(correlationId)
+                        ? correlationId
+                        : UUID.randomUUID().toString()
         );
 
         return execution.execute(request, body);
