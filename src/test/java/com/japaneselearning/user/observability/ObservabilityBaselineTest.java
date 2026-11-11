@@ -37,7 +37,7 @@ class ObservabilityBaselineTest {
         assertThat(environment.getProperty("spring.application.name")).isEqualTo("user-learning");
         assertThat(environment.getProperty("app.deployment-environment")).isEqualTo("development");
         assertThat(environment.getProperty("management.endpoints.web.exposure.include", "health")).isEqualTo("health");
-        assertThat(environment.getProperty("management.tracing.sampling.probability")).isEqualTo("1.0");
+        assertThat(environment.getProperty("management.tracing.sampling.probability")).isEqualTo("0.1");
         for (String key : new String[]{"management.otlp.metrics.export.enabled",
                 "management.tracing.export.otlp.enabled", "management.logging.export.otlp.enabled"}) {
             assertThat(environment.getProperty(key, Boolean.class)).as(key).isFalse();
