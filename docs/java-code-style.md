@@ -246,11 +246,11 @@ return types, constructors, annotations, local variables, or method bodies.
 Incorrect:
 
 ```java
-private com.japaneselearning.learning.metrics.SecurityMetrics securityMetrics;
+private com.hospitalmanagement.hospital.metrics.SecurityMetrics securityMetrics;
 
 @org.springframework.beans.factory.annotation.Autowired(required = false)
 public void setSecurityMetrics(
-        com.japaneselearning.learning.metrics.SecurityMetrics metrics
+        com.hospitalmanagement.hospital.metrics.SecurityMetrics metrics
 ) {
     this.securityMetrics = metrics;
 }
@@ -259,7 +259,7 @@ public void setSecurityMetrics(
 Correct imports:
 
 ```java
-import com.japaneselearning.learning.metrics.SecurityMetrics;
+import com.hospitalmanagement.hospital.metrics.SecurityMetrics;
 import org.springframework.beans.factory.annotation.Autowired;
 ```
 

@@ -8,11 +8,11 @@
         <version>4.1.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.japaneselearning</groupId>
-    <artifactId>user</artifactId>
+    <groupId>com.hospitalmanagement</groupId>
+    <artifactId>hospital-user-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name/>
-    <description/>
+    <name>Hospital Management System - User API</name>
+    <description>Authentication and user management for Hospital Management System</description>
     <url/>
     <licenses>
         <license/>

@@ -44,7 +44,7 @@ or invalid). The correlation filter runs before security, making the request's
 correlation ID available during JWT verification.
 
 Override caller identity with `JWKS_CALLER_SERVICE`, `JWKS_CALLER_INSTANCE`, and
-`JWKS_CALLER_VERSION`. Defaults are `spring.application.name` (`user-learning`),
+`JWKS_CALLER_VERSION`. Defaults are `spring.application.name` (`hospital-user-api`),
 `HOSTNAME` (or a generated instance UUID), and the Maven project version.
 Values must be 1–64 ASCII letters/digits, dots, underscores or hyphens, starting
 with a letter/digit; invalid identity values are sent as `unknown`.
@@ -61,13 +61,13 @@ old public keys until their tokens expire (including allowed clock skew).
 ## Isolated internal authentication
 
 `InternalApiSecurityConfig` orders the `/internal/**` chain first; `UserSecurityConfig` supplies the external chain second.
-`InternalJwtDecoderConfig` trusts only the configured Learning JWKS URI, issuer and subject
+`InternalJwtDecoderConfig` trusts only the configured Hospital JWKS URI, issuer and subject
 `learning-service`, audience `user-service`, RS256 and `typ=internal+jwt`. It requires `kid`,
 `jti`, `iat`, `exp`, validates optional `nbf`, rejects future issuance beyond clock skew and
 limits token lifetime. Nimbus default type validation is explicitly disabled only on this
 internal decoder and replaced by the exact type check. External JWT validation is unchanged.
 
-An authenticated Learning identity receives only `SERVICE_LEARNING`; it never receives User
+An authenticated Hospital identity receives only `SERVICE_HOSPITAL`; it never receives User
 or Admin roles. Only GET `/internal/users/*` is authorized. Missing/invalid tokens return 401,
 valid identities denied by route policy return 403. Both chains are stateless.
 
