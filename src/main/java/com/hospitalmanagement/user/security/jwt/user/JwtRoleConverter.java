@@ -16,7 +16,10 @@ public class JwtRoleConverter implements Converter<@NonNull Jwt, Collection<Gran
 
     private static final Map<String, String> ROLE_MAPPING = Map.of(
             "1", "ROLE_USER",
-            "2", "ROLE_ADMIN"
+            "2", "ROLE_PATIENT",
+            "3", "ROLE_STAFF",
+            "4", "ROLE_DOCTOR",
+            "5", "ROLE_ADMIN"
     );
 
     @Override
