@@ -3,6 +3,7 @@ package com.hospitalmanagement.user.service.impl;
 import com.hospitalmanagement.user.common.exception.BusinessException;
 import com.hospitalmanagement.user.common.exception.ErrorCode;
 import com.hospitalmanagement.user.dto.UserDTO;
+import com.hospitalmanagement.user.dto.response.InternalUserResponse;
 import com.hospitalmanagement.user.dto.response.PageResponse;
 import com.hospitalmanagement.user.dto.response.UserResponse;
 import com.hospitalmanagement.user.entity.User;
@@ -94,6 +95,23 @@ public class UserManagementServiceImpl implements UserManagementService {
                 user.isActivated(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
+        ));
+    }
+
+    @Override
+    public InternalUserResponse getInternalUser(UUID uuid) {
+        User user = findUserOrThrow(uuid);
+
+        log.debug("Internal user lookup completed");
+
+        return new InternalUserResponse(new InternalUserResponse.Account(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.isActivated(),
+                user.getCreatedAt(),
+                user.getUpdatedAt(),
+                user.getRole()
         ));
     }
 

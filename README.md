@@ -65,17 +65,33 @@ Authorization: Bearer <learning-service-token>
    `InternalJwtDecoderConfig.internalJwtDecoder()`. This happens before the controller.
 3. The validated service identity receives `SERVICE_HOSPITAL`; the GET rule permits it.
 4. `controller/internal/InternalUserController.getUser(id)` delegates to
-   `UserManagementService.getUser(id)`.
-5. Spring's injected implementation, `UserManagementServiceImpl.getUser(uuid)`,
+   `UserManagementService.getInternalUser(id)`.
+5. Spring's injected implementation, `UserManagementServiceImpl.getInternalUser(uuid)`,
    calls its private `findUserOrThrow(uuid)` helper.
 6. `UserRepository.findById(uuid)` queries the database. An absent user raises
    `BusinessException(USER_NOT_FOUND)`.
-7. The service maps the entity to `UserDTO`, wraps it in `UserResponse`, and
-   returns it. Spring serializes the controller result as JSON.
+7. The service maps the entity to `InternalUserResponse`. The response's
+   numeric role comes from the current database record.
 
-Successful internal responses have a top-level `user` field. They are not wrapped
-in `APIResponse`. Administrator and authentication controllers use the
-`APIResponse` envelope through `BaseController`.
+Successful internal responses use this shape, without an `APIResponse` envelope.
+
+```json
+{
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "example-doctor",
+    "email": "doctor@example.invalid",
+    "isActivated": true,
+    "createdAt": "2026-11-01T10:00:00",
+    "updatedAt": "2026-11-02T10:00:00",
+    "role": 4
+  }
+}
+```
+
+Role codes are USER=1, PATIENT=2, STAFF=3, DOCTOR=4 and ADMIN=5. An inactive
+account still returns its current role with `isActivated: false`. Public
+administrator and authentication responses retain their existing fields.
 
 For login, follow `AuthController.login()` -> `AuthServiceImpl.login()` ->
 `retrieveActivatedAccount()` -> `JwtTokenService.generateAccessToken()` and
