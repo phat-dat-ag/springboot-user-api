@@ -1,15 +1,19 @@
 package com.hospitalmanagement.user.security.jwt.internal;
 
-import com.hospitalmanagement.user.security.config.InternalApiSecurityConfig;
-import com.hospitalmanagement.user.security.config.UserSecurityConfig;
-import com.hospitalmanagement.user.security.jwt.user.JwtDecoderConfig;
 import com.hospitalmanagement.user.controller.UserManagementController;
 import com.hospitalmanagement.user.controller.internal.InternalUserController;
 import com.hospitalmanagement.user.dto.UserDTO;
 import com.hospitalmanagement.user.dto.response.UserResponse;
+import com.hospitalmanagement.user.security.config.InternalApiSecurityConfig;
+import com.hospitalmanagement.user.security.config.UserSecurityConfig;
+import com.hospitalmanagement.user.security.jwt.user.JwtDecoderConfig;
+import com.hospitalmanagement.user.security.jwt.user.JwtProperties;
 import com.hospitalmanagement.user.security.jwt.user.JwtRoleConverter;
 import com.hospitalmanagement.user.service.UserManagementService;
-import com.nimbusds.jose.*;
+
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -23,13 +27,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Bean;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.restclient.RestTemplateBuilder;
-import com.hospitalmanagement.user.security.jwt.user.JwtProperties;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -44,7 +47,8 @@ import java.util.UUID;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest({InternalUserController.class, UserManagementController.class})
 @Import({
@@ -67,6 +71,8 @@ class InternalJwtAuthenticationTest {
 
     private static final UUID ID = UUID.fromString("f05bf709-5cb8-4a4c-9ac4-e537b5579aef");
     private static final String INTERNAL = "/internal/users/" + ID;
+    private static final String ADMIN = "/admin/users/" + ID;
+    private static final int ADMIN_ROLE_ID = 5;
     private static final RSAKey USER = key("user-test-v1");
     private static final RSAKey HOSPITAL = key("learning-test-v1");
     private static final RSAKey OTHER = key("other-key");
@@ -152,10 +158,10 @@ class InternalJwtAuthenticationTest {
             case "noExpiry" -> claims.expirationTime(null);
             case "noIssuedAt" -> claims.issueTime(null);
             case "noJti" -> claims.jwtID(null);
-            case "expired" ->
-                    claims.issueTime(Date.from(now.minusSeconds(120))).expirationTime(Date.from(now.minusSeconds(60)));
-            case "futureIssuedAt" ->
-                    claims.issueTime(Date.from(now.plusSeconds(30))).expirationTime(Date.from(now.plusSeconds(90)));
+            case "expired" -> claims.issueTime(Date.from(now.minusSeconds(120)))
+                    .expirationTime(Date.from(now.minusSeconds(60)));
+            case "futureIssuedAt" -> claims.issueTime(Date.from(now.plusSeconds(30)))
+                    .expirationTime(Date.from(now.plusSeconds(90)));
             case "futureNotBefore" -> claims.notBeforeTime(Date.from(now.plusSeconds(30)));
             case "longLifetime" -> claims.expirationTime(Date.from(now.plusSeconds(301)));
             case "invertedTimes" -> claims.expirationTime(Date.from(now.minusSeconds(1)));
@@ -180,18 +186,42 @@ class InternalJwtAuthenticationTest {
     @Test
     void keySetsAndSecurityChainsRemainIsolated() throws Exception {
         String user = token(USER, userClaims(1), "JWT", USER.getKeyID());
-        String internal = token(HOSPITAL, claims(), "internal+jwt", HOSPITAL.getKeyID());
-        mvc.perform(get(INTERNAL).header("Authorization", "Bearer " + user)).andExpect(status().isUnauthorized());
-        mvc.perform(get("/admin/users/" + ID).header("Authorization", "Bearer " + internal)).andExpect(status().isUnauthorized());
-        // Even spoofed user claims signed by Hospital cannot pass the external User-only key source.
-        mvc.perform(get("/admin/users/" + ID).header("Authorization", "Bearer " +
-                token(HOSPITAL, userClaims(2), "JWT", HOSPITAL.getKeyID()))).andExpect(status().isUnauthorized());
-        mvc.perform(get("/admin/users/" + ID).header("Authorization", "Bearer " + user)).andExpect(status().isForbidden());
-        mvc.perform(get("/admin/users/" + ID).header("Authorization", "Bearer " +
-                        token(USER, userClaims(2), "JWT", USER.getKeyID()))).andExpect(status().isOk())
+        String internal = token(
+                HOSPITAL,
+                claims(),
+                "internal+jwt",
+                HOSPITAL.getKeyID()
+        );
+        String hospitalSignedAdmin = token(
+                HOSPITAL,
+                userClaims(ADMIN_ROLE_ID),
+                "JWT",
+                HOSPITAL.getKeyID()
+        );
+        String admin = token(USER, userClaims(ADMIN_ROLE_ID), "JWT", USER.getKeyID());
+
+        mvc.perform(get(INTERNAL).header("Authorization", "Bearer " + user))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get(ADMIN).header("Authorization", "Bearer " + internal))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get(ADMIN).header("Authorization", "Bearer " + hospitalSignedAdmin))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get(ADMIN).header("Authorization", "Bearer " + admin))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
-        mvc.perform(post(INTERNAL).header("Authorization", "Bearer " + internal)).andExpect(status().isForbidden());
-        mvc.perform(get("/internal/other").header("Authorization", "Bearer " + internal)).andExpect(status().isForbidden());
+        mvc.perform(post(INTERNAL).header("Authorization", "Bearer " + internal))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/internal/other").header("Authorization", "Bearer " + internal))
+                .andExpect(status().isForbidden());
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3, 4})
+    void nonAdminUserCannotAccessAdminEndpoint(int role) throws Exception {
+        String user = token(USER, userClaims(role), "JWT", USER.getKeyID());
+
+        mvc.perform(get(ADMIN).header("Authorization", "Bearer " + user))
+                .andExpect(status().isForbidden());
     }
 
     private static JWTClaimsSet.Builder claims() {
@@ -208,13 +238,17 @@ class InternalJwtAuthenticationTest {
         return claims().issuer("user-service").subject(ID.toString()).claim("role", role);
     }
 
-    private static String token(RSAKey key, JWTClaimsSet.Builder claims, String type, String kid) throws Exception {
-        var jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256)
+    private static String token(
+            RSAKey key,
+            JWTClaimsSet.Builder claims,
+            String type,
+            String kid
+    ) throws Exception {
+        var header = new JWSHeader.Builder(JWSAlgorithm.RS256)
                 .type(new JOSEObjectType(type))
                 .keyID(kid)
-                .build(),
-                claims.build()
-        );
+                .build();
+        var jwt = new SignedJWT(header, claims.build());
 
         jwt.sign(new RSASSASigner(key));
 

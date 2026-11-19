@@ -58,6 +58,37 @@ The external JWKS must publish the public half of the active signing key with
 the same `kid`. Publish a new public key before switching signing keys and keep
 old public keys until their tokens expire (including allowed clock skew).
 
+## User roles
+
+The User service signs the stored numeric role into the `role` claim.
+
+| ID | Authority |
+|---:|---|
+| 1 | `ROLE_USER` |
+| 2 | `ROLE_PATIENT` |
+| 3 | `ROLE_STAFF` |
+| 4 | `ROLE_DOCTOR` |
+| 5 | `ROLE_ADMIN` |
+
+Public registration defaults to role 1. The `/admin/users/**` routes require
+`ROLE_ADMIN`.
+
+Coordinate the rollout with any other service that interprets this claim.
+Before enabling the new role assignments, migrate verified administrator
+accounts to role 5 in the database. The legacy administrator ID is 2.
+Deployments that used the interim mapping may also have administrators with
+ID 4. Use verified account records to resolve IDs from interim mappings
+before updating accounts.
+
+Existing access tokens retain the ID they were issued with. Switch all
+verifiers to the new mapping before issuing tokens with reassigned IDs. After
+the switch, older administrator access tokens with ID 2 or 4 resolve to patient
+or doctor authorities, respectively. If an interim mapping was deployed,
+review any other reassigned IDs as well. Ensure affected tokens have expired
+or been invalidated before enabling routes that rely on those authorities.
+Administrators can refresh their access tokens or sign in again after their
+database roles are migrated.
+
 ## Isolated internal authentication
 
 `InternalApiSecurityConfig` orders the `/internal/**` chain first; `UserSecurityConfig` supplies the external chain second.
