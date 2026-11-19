@@ -3,6 +3,7 @@ package com.hospitalmanagement.user.security.jwt.internal;
 import com.hospitalmanagement.user.controller.UserManagementController;
 import com.hospitalmanagement.user.controller.internal.InternalUserController;
 import com.hospitalmanagement.user.dto.UserDTO;
+import com.hospitalmanagement.user.dto.response.InternalUserResponse;
 import com.hospitalmanagement.user.dto.response.UserResponse;
 import com.hospitalmanagement.user.security.config.InternalApiSecurityConfig;
 import com.hospitalmanagement.user.security.config.UserSecurityConfig;
@@ -98,6 +99,11 @@ class InternalJwtAuthenticationTest {
 
     @BeforeEach
     void response() {
+        given(users.getInternalUser(ID)).willReturn(new InternalUserResponse(
+                new InternalUserResponse.Account(
+                        ID, "test-user", "test@example.invalid", true, null, null, (short) 4
+                )
+        ));
         given(users.getUser(ID)).willReturn(new UserResponse(
                         new UserDTO(
                                 ID,
@@ -122,7 +128,18 @@ class InternalJwtAuthenticationTest {
                         "Authorization",
                         "Bearer " + token(HOSPITAL, claims(), "internal+jwt", HOSPITAL.getKeyID())
                 ))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.user.id").value(ID.toString()));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.id").value(ID.toString()))
+                .andExpect(jsonPath("$.user.role").value(4));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3, 4, 5})
+    void rejectsEveryEndUserRoleOnTheInternalLookup(int role) throws Exception {
+        String user = token(USER, userClaims(role), "JWT", USER.getKeyID());
+
+        mvc.perform(get(INTERNAL).header("Authorization", "Bearer " + user))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

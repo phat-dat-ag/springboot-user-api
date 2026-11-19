@@ -1,6 +1,7 @@
 package com.hospitalmanagement.user.service;
 
 import com.hospitalmanagement.user.dto.UserDTO;
+import com.hospitalmanagement.user.dto.response.InternalUserResponse;
 import com.hospitalmanagement.user.dto.response.PageResponse;
 import com.hospitalmanagement.user.dto.response.UserResponse;
 
@@ -16,6 +17,8 @@ public interface UserManagementService {
     );
 
     UserResponse getUser(UUID uuid);
+
+    InternalUserResponse getInternalUser(UUID uuid);
 
     void updateUserActivation(UUID uuid, boolean newActivationStatus);
 }

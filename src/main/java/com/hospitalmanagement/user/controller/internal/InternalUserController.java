@@ -1,6 +1,6 @@
 package com.hospitalmanagement.user.controller.internal;
 
-import com.hospitalmanagement.user.dto.response.UserResponse;
+import com.hospitalmanagement.user.dto.response.InternalUserResponse;
 import com.hospitalmanagement.user.service.UserManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * Service-to-service user lookup. InternalApiSecurityConfig authenticates Hospital before
- * dispatching here. Success returns UserResponse directly, without APIResponse.
+ * dispatching here. Success returns the internal response without APIResponse.
  */
 @RestController
 @RequestMapping("/internal/users")
@@ -22,9 +22,9 @@ public class InternalUserController {
     private final UserManagementService userManagementService;
 
     @GetMapping("/{id}")
-    public UserResponse getUser(
+    public InternalUserResponse getUser(
             @PathVariable UUID id
     ) {
-        return userManagementService.getUser(id);
+        return userManagementService.getInternalUser(id);
     }
 }
